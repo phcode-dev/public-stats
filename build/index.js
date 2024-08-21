@@ -1,5 +1,6 @@
 const fs = require('fs');
 const downloadCounts = require("./downloadCounts");
+const downloadHistory = require("./downloadHistory");
 
 async function getReleaseDetails() {
     const headers = {
@@ -51,6 +52,7 @@ async function updateDocs() {
     // fs.writeFileSync('temp/release.json', JSON.stringify(releases, null, 2)); // only do this once and comment
     //const releases = JSON.parse(fs.readFileSync('temp/release.json'));
     downloadCounts.updateDownloadStats(releases);
+    downloadHistory.updateDownloadHistory(releases);
 }
 
 updateDocs();

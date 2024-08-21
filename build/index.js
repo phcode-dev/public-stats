@@ -33,8 +33,19 @@ async function getReleaseDetails() {
     return releases;
 }
 
+function ensureDirectoryExists(dirPath) {
+    try {
+        // The 'recursive' option ensures all parent directories are created if not existing
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`Directory '${dirPath}' is ensured (created if it didn't exist).`);
+    } catch (error) {
+        // This will catch any errors, like permission issues or filesystem errors
+        console.error(`Error ensuring directory '${dirPath}':`, error);
+    }
+}
 
 async function updateDocs() {
+    ensureDirectoryExists('docs/generated');
     const releases = await getReleaseDetails();
     // for debugging uncomment the below lines  and comment the github fetch line
     // fs.writeFileSync('temp/release.json', JSON.stringify(releases, null, 2)); // only do this once and comment

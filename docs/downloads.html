@@ -7,17 +7,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div style="width:80%; margin: 20px auto; height: 50vh;">
-    <canvas id="downloadsChart"></canvas>
-</div>
+<h1>Downloads by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
 </div>
+<h1>Installer downloads only by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="installerChart"></canvas>
 </div>
+<h1>Updates only by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="updaterChart"></canvas>
+</div>
+<h1>Individual Assets</h1>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="downloadsChart"></canvas>
 </div>
 <script>
     const data = {
@@ -46,7 +50,6 @@
     const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
     const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
 
-    const linuxUpdater = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // No Linux updaters in the example data
     const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
     const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
 

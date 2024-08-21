@@ -92,6 +92,9 @@ function patchHistory(releases, existingProdReleaseHistory) {
                     "publishDate": releaseDetails.publishDate,
                     "timeSeries": [today],
                 }
+                for(let key of HISTORY_KEYS) {
+                    newEntry[key] = [];
+                }
                 for(let key of Object.keys(releaseDetails.downloads)) {
                     newEntry[key] = [releaseDetails.downloads[key]];
                 }

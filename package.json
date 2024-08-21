@@ -1,0 +1,11 @@
+{
+  "name": "@phcode/public-stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "build": "node build/index.js"
+  },
+  "dependencies": {
+  }
+}

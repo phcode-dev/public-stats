@@ -7,6 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<h1>Version Selector</h1>
+<select id="versionSelector"></select>
+
 <h1>Downloads by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
@@ -25,119 +28,178 @@
 </div>
 <script>
     const data = {
-        "publishDate": "2024-05-26T09:46:28Z",
-        "timeSeries": [
-            "20-08-2024", "21-08-2024", "22-08-2024", "23-08-2024", "24-08-2024",
-            "25-08-2024", "26-08-2024", "27-08-2024", "28-08-2024", "29-08-2024"
-        ],
-        "LINUX_X64_GLIBC_2_31_INSTALLER": [17, 20, 15, 18, 22, 25, 27, 30, 28, 32],
-        "LINUX_X64_GLIBC_2_35_INSTALLER": [1744, 1760, 1790, 1800, 1820, 1840, 1860, 1880, 1890, 1900],
-        "MAC_M1_INSTALLER": [3795, 3800, 3850, 3900, 3950, 4000, 4050, 4100, 4150, 4200],
-        "WINDOWS_X64_INSTALLER": [6013, 6050, 6100, 6150, 6200, 6250, 6300, 6350, 6400, 6450],
-        "WINDOWS_X64_UPDATER": [1570, 1600, 1620, 1640, 1660, 1680, 1700, 1720, 1740, 1760],
-        "MAC_X64_INSTALLER": [2037, 2050, 2070, 2090, 2100, 2120, 2140, 2160, 2180, 2200],
-        "MAC_M1_UPDATER": [636, 640, 645, 650, 655, 660, 665, 670, 675, 680],
-        "MAC_X64_UPDATER": [204, 210, 220, 230, 240, 250, 260, 270, 280, 290],
-        "totalDownloads": [16172, 16200, 16250, 16300, 16350, 16400, 16450, 16500, 16550, 16600]
-    };
-
-    // Calculate platform aggregates
-    function sumDownloads(dataArray) {
-        return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
-    }
-
-    const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER]);
-    const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
-    const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
-
-    const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
-    const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
-
-    const ctx1 = document.getElementById('downloadsChart').getContext('2d');
-    const downloadsChart = new Chart(ctx1, {
-        type: 'line',
-        data: createChartData(data, ''),
-        options: createChartOptions()
-    });
-
-    const ctx2 = document.getElementById('platformChart').getContext('2d');
-    const platformChart = new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: data.timeSeries,
-            datasets: [
-                { label: 'Linux Downloads', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Mac Downloads', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Windows Downloads', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Total Downloads', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
-            ]
-        },
-        options: createChartOptions()
-    });
-
-    const ctx3 = document.getElementById('installerChart').getContext('2d');
-    const installerChart = new Chart(ctx3, {
-        type: 'line',
-        data: {
-            labels: data.timeSeries,
-            datasets: [
-                { label: 'Linux Installers', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Mac Installers', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Windows Installers', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 }
-            ]
-        },
-        options: createChartOptions()
-    });
-
-    const ctx4 = document.getElementById('updaterChart').getContext('2d');
-    const updaterChart = new Chart(ctx4, {
-        type: 'line',
-        data: {
-            labels: data.timeSeries,
-            datasets: [
-                { label: 'Mac Updaters', data: macUpdater, borderColor: getRandomColor(), tension: 0.1 },
-                { label: 'Windows Updaters', data: windowsUpdater, borderColor: getRandomColor(), tension: 0.1 }
-            ]
-        },
-        options: createChartOptions()
-    });
-
-    function createChartData(data, labelPrefix) {
-        return {
-            labels: data.timeSeries,
-            datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
-                label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
-                data: data[key],
-                borderColor: getRandomColor(),
-                tension: 0.1
-            }))
-        };
-    }
-
-    function createChartOptions() {
-        return {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
+            "2.7.4": {
+                "timeSeries": [
+                    "10-08-2024", "11-08-2024", "12-08-2024", "13-08-2024", "14-08-2024",
+                    "15-08-2024", "16-08-2024", "17-08-2024", "18-08-2024", "19-08-2024"
+                ],
+                "LINUX_X64_GLIBC_2_31_INSTALLER": [12, 15, 17, 19, 22, 18, 20, 23, 25, 27],
+                "LINUX_X64_GLIBC_2_35_INSTALLER": [1700, 1720, 1740, 1760, 1780, 1800, 1820, 1840, 1860, 1880],
+                "MAC_M1_INSTALLER": [3700, 3725, 3750, 3775, 3800, 3825, 3850, 3875, 3900, 3925],
+                "WINDOWS_X64_INSTALLER": [6000, 6025, 6050, 6075, 6100, 6125, 6150, 6175, 6200, 6225],
+                "WINDOWS_X64_UPDATER": [1500, 1525, 1550, 1575, 1600, 1625, 1650, 1675, 1700, 1725],
+                "MAC_X64_INSTALLER": [2000, 2025, 2050, 2075, 2100, 2125, 2150, 2175, 2200, 2225],
+                "MAC_M1_UPDATER": [600, 625, 650, 675, 700, 725, 750, 775, 800, 825],
+                "MAC_X64_UPDATER": [200, 215, 230, 245, 260, 275, 290, 305, 320, 335],
+                "totalDownloads": [16000, 10025, 16050, 16075, 16100, 16125, 16150, 16175, 16200, 16225]
             },
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
+            "3.4.5": {
+                "timeSeries": [
+                    "10-08-2024", "11-08-2024", "12-08-2024", "13-08-2024", "14-08-2024",
+                    "15-08-2024", "16-08-2024", "17-08-2024", "18-08-2024", "19-08-2024"
+                ],
+                "LINUX_X64_GLIBC_2_31_INSTALLER": [14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+                "LINUX_X64_GLIBC_2_35_INSTALLER": [1650, 1670, 1690, 1710, 1730, 1750, 1770, 1790, 1810, 1830],
+                "MAC_M1_INSTALLER": [3650, 3675, 3700, 3725, 3750, 3775, 3800, 3825, 3850, 3875],
+                "WINDOWS_X64_INSTALLER": [5900, 5925, 5950, 5975, 6000, 6025, 6050, 6075, 6100, 6125],
+                "WINDOWS_X64_UPDATER": [1450, 1475, 1500, 1525, 1550, 1575, 1600, 1625, 1650, 1675],
+                "MAC_X64_INSTALLER": [1950, 1975, 2000, 2025, 2050, 2075, 2100, 2125, 2150, 2175],
+                "MAC_M1_UPDATER": [590, 615, 640, 665, 690, 715, 740, 765, 790, 815],
+                "MAC_X64_UPDATER": [195, 210, 225, 240, 255, 270, 285, 300, 315, 330],
+                "totalDownloads": [15850, 5875, 15900, 15925, 15950, 15975, 16000, 16025, 16050, 16075]
             },
-            responsive: true,
-            maintainAspectRatio: false
+            "4.1.2": {
+                "timeSeries": [
+                    "10-08-2024", "11-08-2024", "12-08-2024", "13-08-2024", "14-08-2024",
+                    "15-08-2024", "16-08-2024", "17-08-2024", "18-08-2024", "19-08-2024"
+                ],
+                "LINUX_X64_GLIBC_2_31_INSTALLER": [10, 12, 14, 16, 18, 20, 22, 24, 26, 28],
+                "LINUX_X64_GLIBC_2_35_INSTALLER": [1600, 1620, 1640, 1660, 1680, 1700, 1720, 1740, 1760, 1780],
+                "MAC_M1_INSTALLER": [3600, 3625, 3650, 3675, 3700, 3725, 3750, 3775, 3800, 3825],
+                "WINDOWS_X64_INSTALLER": [5800, 5825, 5850, 5875, 5900, 5925, 5950, 5975, 6000, 6025],
+                "WINDOWS_X64_UPDATER": [1400, 1425, 1450, 1475, 1500, 1525, 1550, 1575, 1600, 1625],
+                "MAC_X64_INSTALLER": [1900, 1925, 1950, 1975, 2000, 2025, 2050, 2075, 2100, 2125],
+                "MAC_M1_UPDATER": [580, 605, 630, 655, 680, 705, 730, 755, 780, 805],
+                "MAC_X64_UPDATER": [190, 205, 220, 235, 250, 265, 280, 295, 310, 325],
+                "totalDownloads": [15680, 700, 15720, 15740, 15760, 15780, 15800, 15820, 15840, 15860]
+            }
         };
-    }
 
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
+    const versionSelector = document.getElementById('versionSelector');
+    const versions = Object.keys(data);
+    versions.forEach(version => {
+        const option = document.createElement('option');
+        option.value = version;
+        option.textContent = version;
+        versionSelector.appendChild(option);
+    });
+    // Initialize charts with the first version selected
+    versionSelector.addEventListener('change', () => {
+        updateCharts(data[versionSelector.value]);
+    });
+
+    let downloadsChart, platformChart, installerChart, updaterChart;
+    function updateCharts(data) {
+        // Calculate platform aggregates
+        function sumDownloads(dataArray) {
+            return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
         }
-        return color;
+
+        const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER]);
+        const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
+        const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
+
+        const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
+        const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
+
+        const ctx1 = document.getElementById('downloadsChart').getContext('2d');
+        if(downloadsChart){
+            downloadsChart.destroy();
+        }
+        downloadsChart = new Chart(ctx1, {
+            type: 'line',
+            data: createChartData(data, ''),
+            options: createChartOptions()
+        });
+
+        const ctx2 = document.getElementById('platformChart').getContext('2d');
+        if(platformChart){
+            platformChart.destroy();
+        }
+        platformChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: data.timeSeries,
+                datasets: [
+                    { label: 'Linux Downloads', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Mac Downloads', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Windows Downloads', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Total Downloads', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
+                ]
+            },
+            options: createChartOptions()
+        });
+
+        const ctx3 = document.getElementById('installerChart').getContext('2d');
+        if(installerChart){
+            installerChart.destroy();
+        }
+        installerChart = new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: data.timeSeries,
+                datasets: [
+                    { label: 'Linux Installers', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Mac Installers', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Windows Installers', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 }
+                ]
+            },
+            options: createChartOptions()
+        });
+
+        const ctx4 = document.getElementById('updaterChart').getContext('2d');
+        if(updaterChart){
+            updaterChart.destroy();
+        }
+        updaterChart = new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: data.timeSeries,
+                datasets: [
+                    { label: 'Mac Updaters', data: macUpdater, borderColor: getRandomColor(), tension: 0.1 },
+                    { label: 'Windows Updaters', data: windowsUpdater, borderColor: getRandomColor(), tension: 0.1 }
+                ]
+            },
+            options: createChartOptions()
+        });
+
+        function createChartData(data, labelPrefix) {
+            return {
+                labels: data.timeSeries,
+                datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
+                    label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
+                    data: data[key],
+                    borderColor: getRandomColor(),
+                    tension: 0.1
+                }))
+            };
+        }
+
+        function createChartOptions() {
+            return {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            };
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
     }
 </script>
 </body>

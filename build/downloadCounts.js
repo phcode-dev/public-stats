@@ -31,10 +31,10 @@ function computeTotalDownloads(releases) {
     return {totalInstallerDownloads, totalUpdaterDownloads};
 }
 
+const DOWNLOAD_COUNTS_URL = "https://public-stats.phcode.io/generated/download_counts.json";
 async function getCurrentDownloadData() {
     try{
-        const downloadURL = "https://public-stats.phcode.io/generated/download_counts.json";
-        const fetchedData = await fetch(downloadURL);
+        const fetchedData = await fetch(DOWNLOAD_COUNTS_URL);
         return await fetchedData.json();
     } catch (e) {
         console.error("No previous data", e);
@@ -42,7 +42,7 @@ async function getCurrentDownloadData() {
     return null;
 }
 
-function updateDownloadStats(releases) {
+async function updateDownloadStats(releases) {
     const {totalInstallerDownloads, totalUpdaterDownloads} = computeTotalDownloads(releases);
 
     const data = {
@@ -53,7 +53,8 @@ function updateDownloadStats(releases) {
         updateDownloads: totalUpdaterDownloads,
         "downloadProofLink": "https://github.com/phcode-dev/public-stats"
     };
-    const existingData = getCurrentDownloadData();
+    const existingData = await getCurrentDownloadData();
+    console.log(`Current data from ${DOWNLOAD_COUNTS_URL}`, existingData);
     if (existingData && existingData.timestamp && existingData.totalDownloads) {
         const lastTimeStamp = new Date(existingData.timestamp).getTime();
         const currentTimeStamp = new Date(data.timestamp).getTime();
@@ -63,6 +64,7 @@ function updateDownloadStats(releases) {
             Math.round(downloadDifference / timeDifferenceMinutes): 0;
     }
 
+    console.log("writing to docs/generated/download_counts.json", data);
     fs.writeFileSync('docs/generated/download_counts.json', JSON.stringify(data, null, 2));
 }
 

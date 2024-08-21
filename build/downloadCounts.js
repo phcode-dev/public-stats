@@ -31,13 +31,13 @@ function computeTotalDownloads(releases) {
     return {totalInstallerDownloads, totalUpdaterDownloads};
 }
 
-function getCurrentDownloadData() {
+async function getCurrentDownloadData() {
     try{
-        const jsonText = fs.readFileSync('docs/generated/download_counts.json');
-        const dataObj = JSON.parse(jsonText);
-        return dataObj;
+        const downloadURL = "https://public-stats.phcode.io/generated/download_counts.json";
+        const fetchedData = await fetch(downloadURL);
+        return await fetchedData.json();
     } catch (e) {
-        console.error(e);
+        console.error("No previous data", e);
     }
     return null;
 }

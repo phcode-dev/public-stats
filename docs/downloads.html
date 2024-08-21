@@ -27,7 +27,9 @@
     <canvas id="downloadsChart"></canvas>
 </div>
 <script>
-    const data = {
+    async function plotData() {
+        let downloadsChart, platformChart, installerChart, updaterChart;
+        const data = {
             "2.7.4": {
                 "timeSeries": [
                     "10-08-2024", "11-08-2024", "12-08-2024", "13-08-2024", "14-08-2024",
@@ -75,132 +77,139 @@
             }
         };
 
-    const versionSelector = document.getElementById('versionSelector');
-    const versions = Object.keys(data);
-    versions.forEach(version => {
-        const option = document.createElement('option');
-        option.value = version;
-        option.textContent = version;
-        versionSelector.appendChild(option);
-    });
-    // Initialize charts with the first version selected
-    versionSelector.addEventListener('change', () => {
-        updateCharts(data[versionSelector.value]);
-    });
-
-    let downloadsChart, platformChart, installerChart, updaterChart;
-    function updateCharts(data) {
-        // Calculate platform aggregates
-        function sumDownloads(dataArray) {
-            return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
-        }
-
-        const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER]);
-        const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
-        const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
-
-        const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
-        const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
-
-        const ctx1 = document.getElementById('downloadsChart').getContext('2d');
-        if(downloadsChart){
-            downloadsChart.destroy();
-        }
-        downloadsChart = new Chart(ctx1, {
-            type: 'line',
-            data: createChartData(data, ''),
-            options: createChartOptions()
-        });
-
-        const ctx2 = document.getElementById('platformChart').getContext('2d');
-        if(platformChart){
-            platformChart.destroy();
-        }
-        platformChart = new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: data.timeSeries,
-                datasets: [
-                    { label: 'Linux Downloads', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Mac Downloads', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Windows Downloads', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Total Downloads', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
-                ]
-            },
-            options: createChartOptions()
-        });
-
-        const ctx3 = document.getElementById('installerChart').getContext('2d');
-        if(installerChart){
-            installerChart.destroy();
-        }
-        installerChart = new Chart(ctx3, {
-            type: 'line',
-            data: {
-                labels: data.timeSeries,
-                datasets: [
-                    { label: 'Linux Installers', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Mac Installers', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Windows Installers', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 }
-                ]
-            },
-            options: createChartOptions()
-        });
-
-        const ctx4 = document.getElementById('updaterChart').getContext('2d');
-        if(updaterChart){
-            updaterChart.destroy();
-        }
-        updaterChart = new Chart(ctx4, {
-            type: 'line',
-            data: {
-                labels: data.timeSeries,
-                datasets: [
-                    { label: 'Mac Updaters', data: macUpdater, borderColor: getRandomColor(), tension: 0.1 },
-                    { label: 'Windows Updaters', data: windowsUpdater, borderColor: getRandomColor(), tension: 0.1 }
-                ]
-            },
-            options: createChartOptions()
-        });
-
-        function createChartData(data, labelPrefix) {
-            return {
-                labels: data.timeSeries,
-                datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
-                    label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
-                    data: data[key],
-                    borderColor: getRandomColor(),
-                    tension: 0.1
-                }))
-            };
-        }
-
-        function createChartOptions() {
-            return {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                responsive: true,
-                maintainAspectRatio: false
-            };
-        }
-
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
+        const versionSelector = document.getElementById('versionSelector');
+        const versions = Object.keys(data);
+        let latestVersion = versions[0];
+        versions.forEach(version => {
+            const option = document.createElement('option');
+            option.value = version;
+            option.textContent = version;
+            versionSelector.appendChild(option);
+            if(version > latestVersion){
+                latestVersion = version;
             }
-            return color;
+        });
+        // Initialize charts with the first version selected
+        versionSelector.addEventListener('change', () => {
+            updateCharts(data[versionSelector.value]);
+        });
+        console.log("latest Version", latestVersion);
+        versionSelector.value = latestVersion;
+        updateCharts(data[latestVersion]);
+        function updateCharts(data) {
+            // Calculate platform aggregates
+            function sumDownloads(dataArray) {
+                return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
+            }
+
+            const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER]);
+            const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
+            const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
+
+            const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
+            const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
+
+            const ctx1 = document.getElementById('downloadsChart').getContext('2d');
+            if(downloadsChart){
+                downloadsChart.destroy();
+            }
+            downloadsChart = new Chart(ctx1, {
+                type: 'line',
+                data: createChartData(data, ''),
+                options: createChartOptions()
+            });
+
+            const ctx2 = document.getElementById('platformChart').getContext('2d');
+            if(platformChart){
+                platformChart.destroy();
+            }
+            platformChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        { label: 'Linux Downloads', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Mac Downloads', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Windows Downloads', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Total Downloads', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
+                    ]
+                },
+                options: createChartOptions()
+            });
+
+            const ctx3 = document.getElementById('installerChart').getContext('2d');
+            if(installerChart){
+                installerChart.destroy();
+            }
+            installerChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        { label: 'Linux Installers', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Mac Installers', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Windows Installers', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 }
+                    ]
+                },
+                options: createChartOptions()
+            });
+
+            const ctx4 = document.getElementById('updaterChart').getContext('2d');
+            if(updaterChart){
+                updaterChart.destroy();
+            }
+            updaterChart = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        { label: 'Mac Updaters', data: macUpdater, borderColor: getRandomColor(), tension: 0.1 },
+                        { label: 'Windows Updaters', data: windowsUpdater, borderColor: getRandomColor(), tension: 0.1 }
+                    ]
+                },
+                options: createChartOptions()
+            });
+
+            function createChartData(data, labelPrefix) {
+                return {
+                    labels: data.timeSeries,
+                    datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
+                        label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
+                        data: data[key],
+                        borderColor: getRandomColor(),
+                        tension: 0.1
+                    }))
+                };
+            }
+
+            function createChartOptions() {
+                return {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                };
+            }
+
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
         }
     }
+    plotData();
 </script>
 </body>
 </html>

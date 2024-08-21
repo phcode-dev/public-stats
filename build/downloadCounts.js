@@ -33,7 +33,7 @@ function computeTotalDownloads(releases) {
 
 function getCurrentDownloadData() {
     try{
-        const jsonText = fs.readFileSync('docs/download_counts.json');
+        const jsonText = fs.readFileSync('docs/generated/download_counts.json');
         const dataObj = JSON.parse(jsonText);
         return dataObj;
     } catch (e) {
@@ -63,7 +63,7 @@ function updateDownloadStats(releases) {
             Math.round(downloadDifference / timeDifferenceMinutes): 0;
     }
 
-    fs.writeFileSync('docs/download_counts.json', JSON.stringify(data, null, 2));
+    fs.writeFileSync('docs/generated/download_counts.json', JSON.stringify(data, null, 2));
 }
 
 exports.updateDownloadStats = updateDownloadStats;

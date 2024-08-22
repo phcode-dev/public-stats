@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Stats Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src=https://unpkg.com/compare-versions/lib/umd/index.js></script>
     <style>
         .toggle-switch {
             display: flex;
@@ -37,11 +38,92 @@
             color: white;
             border: 1px solid #4CAF50;
         }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 100px; /* Increased width to accommodate labels */
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: right;
+            padding: 0 10px;
+            color: black;
+            font-size: 12px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: limegreen;
+            justify-content: left;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(56px); /* Adjusted for wider switch */
+        }
+
+        .label {
+            pointer-events: none; /* Disable events on labels to avoid interference */
+        }
+
+        .daily {
+            display: block;
+            order: 2; /* Ensures it goes to the right when unchecked */
+        }
+
+        .aggregate {
+            display: none;
+        }
+
+        input:checked + .slider .aggregate {
+            display: block;
+            order: 1; /* Ensures it goes to the left when checked */
+        }
+
+        input:checked + .slider .daily {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
 <h1>Version Selector</h1>
 <select id="versionSelector"></select>
+<label class="switch">
+    <input type="checkbox" id="toggleButton">
+    <span class="slider">
+            <span class="label daily">Daily</span>
+            <span class="label aggregate">Aggregate</span>
+        </span>
+</label>
 <h2>Show Last</h2>
 <div class="toggle-switch">
     <label class="toggle-label">
@@ -96,6 +178,10 @@
 <script>
     async function plotData() {
         let timePeriod = localStorage.getItem("HistoryViewWindow") || "30";
+        if(!localStorage.getItem("isAggregateMode")){
+            localStorage.setItem("isAggregateMode", "yes");
+        }
+        let isAggregateMode = (localStorage.getItem("isAggregateMode") === "yes");
         let currentlyPlottingData;
         const radioButtons = document.querySelectorAll('input[name="timeDuration"]');
         radioButtons.forEach(radio => {
@@ -126,24 +212,79 @@
             }
         }
 
+        document.getElementById('toggleButton').addEventListener('change', function() {
+            console.log(`Switched to: ${this.checked ? 'Aggregate' : 'Daily'}`);
+            isAggregateMode = this.checked;
+            setAggregateMode(isAggregateMode);
+            if(currentlyPlottingData){
+                updateCharts(currentlyPlottingData);
+            }
+        });
+
+        function setAggregateMode(isAggregate) {
+            const toggle = document.getElementById('toggleButton');
+            toggle.checked = isAggregate; // true for 'Aggregate', false for 'Daily'
+            localStorage.setItem("isAggregateMode", isAggregate ? "yes" : "no");
+        }
+        setAggregateMode(isAggregateMode);
+
         setSelectedOption(timePeriod);
-        function trimAndReverseVersionData(data, days) {
+
+        function computeDailyDownloads(stats) {
+            const dailyDownloads = [];
+            if(stats.length >= 1){
+                dailyDownloads.push(stats[0]);
+            }
+            for (let i = 1; i < stats.length; i++) {
+                dailyDownloads.push(stats[i] - stats[i - 1]);
+            }
+            return dailyDownloads;
+        }
+
+        function trimAndReverseVersionData(data, days, computeDailyData, version) {
             data = structuredClone(data);
             const trimmedData = {};
 
             const versionData = data;
             const { timeSeries } = versionData;
+
+            if(timeSeries.length === 1 || !timeSeries.length){
+                // if there is only 1 data point, this is likley a new release and we will
+                computeDailyData = false;
+            }
+            let shouldTrimFirstElem = false;
+            if(computeDailyData && (timeSeries.length > days || compareVersions.satisfies(version, "<=3.8.8"))){
+                // if we have more stats, then we add one more day so that we can compute daily downloads
+                // For eg, if we are computing 7 day daily downloads, and we have 8 days stats, we compute the 7th
+                // day downloads by subtracting 7th dya amd 8th day downloads. but the array will have 8 entries,
+                // the first being the absolute 8th day download count, which we should trim.
+
+                // for versions smaller than 3.8.8, we started creating history data mid way and we need to trim the
+                // first element which is the aggregate of several months of downloads, not what we intend for daily
+                // downloads
+                days = days + 1;
+                shouldTrimFirstElem = true;
+            }
             const trimIndex = Math.max(timeSeries.length - days, 0); // Calculate index to start slicing from
 
             // Create a new object for the version, initializing with a trimmed timeSeries
             // the array is sorted in time latest at start, so we need to reverse it too.
             trimmedData.timeSeries = timeSeries.reverse().slice(trimIndex);
+            if(shouldTrimFirstElem){
+                trimmedData.timeSeries = trimmedData.timeSeries.slice(1);
+            }
 
             // Go through each key except timeSeries in the version data
             Object.keys(versionData).forEach(key => {
                 if (!["timeSeries", "publishDate"].includes(key)) {
                     // Trim each array to the same length as the new timeSeries
                     trimmedData[key] = versionData[key].reverse().slice(trimIndex);
+                    if(computeDailyData){
+                        trimmedData[key] = computeDailyDownloads(trimmedData[key]);
+                        if(shouldTrimFirstElem){
+                            trimmedData[key] = trimmedData[key].slice(1);
+                        }
+                    }
                 }
             });
 
@@ -185,7 +326,7 @@
         updateCharts(data[latestVersion]);
         function updateCharts(inputData) {
             currentlyPlottingData = inputData;
-            const data = trimAndReverseVersionData(inputData, parseInt(timePeriod));
+            const data = trimAndReverseVersionData(inputData, parseInt(timePeriod), !isAggregateMode, versionSelector.value);
             // Calculate platform aggregates
             function sumDownloads(dataArray) {
                 return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));

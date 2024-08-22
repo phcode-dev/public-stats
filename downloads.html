@@ -77,7 +77,7 @@
         <span>5 years</span>
     </label>
 </div>
-<h1>Downloads by OS</h1>
+<h1>All downloads by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
 </div>
@@ -198,6 +198,9 @@
             const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
             const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
 
+            const alMac = sumDownloads([macInstaller, macUpdater]);
+            const alWin = sumDownloads([windowsInstaller, windowsUpdater]);
+
             const ctx1 = document.getElementById('downloadsChart').getContext('2d');
             if(downloadsChart){
                 downloadsChart.destroy();
@@ -217,10 +220,11 @@
                 data: {
                     labels: data.timeSeries,
                     datasets: [
-                        { label: 'Linux Downloads', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Mac Downloads', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Windows Downloads', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Total Downloads', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
+                        // in linux we cant distinguish between installs and updates, so we just use linuxInstaller
+                        { label: 'Linux', data: linuxInstaller, borderColor: 'orange', tension: 0.1 },
+                        { label: 'Mac', data: alMac, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows', data: alWin, borderColor: 'blue', tension: 0.1 },
+                        { label: 'Total', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
                     ]
                 },
                 options: createChartOptions()
@@ -235,9 +239,9 @@
                 data: {
                     labels: data.timeSeries,
                     datasets: [
-                        { label: 'Linux Installers', data: linuxInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Mac Installers', data: macInstaller, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Windows Installers', data: windowsInstaller, borderColor: getRandomColor(), tension: 0.1 }
+                        { label: 'Linux', data: linuxInstaller, borderColor: 'orange', tension: 0.1 },
+                        { label: 'Mac', data: macInstaller, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows', data: windowsInstaller, borderColor: 'blue', tension: 0.1 },
                     ]
                 },
                 options: createChartOptions()
@@ -252,8 +256,8 @@
                 data: {
                     labels: data.timeSeries,
                     datasets: [
-                        { label: 'Mac Updaters', data: macUpdater, borderColor: getRandomColor(), tension: 0.1 },
-                        { label: 'Windows Updaters', data: windowsUpdater, borderColor: getRandomColor(), tension: 0.1 }
+                        { label: 'Mac Updaters', data: macUpdater, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows Updaters', data: windowsUpdater, borderColor: 'blue', tension: 0.1 }
                     ]
                 },
                 options: createChartOptions()

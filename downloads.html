@@ -5,11 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Stats Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .toggle-switch {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .toggle-label {
+            cursor: pointer;
+            flex-basis: calc(10%); /* Subtract gap size */
+            text-align: center;
+        }
+
+        .toggle-label input[type="radio"] {
+            display: none;
+        }
+
+        .toggle-label input[type="radio"] + span {
+            display: block;
+            padding: 8px 12px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-label input[type="radio"]:checked + span {
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+        }
+    </style>
 </head>
 <body>
 <h1>Version Selector</h1>
 <select id="versionSelector"></select>
-
+<h2>Show Last</h2>
+<div class="toggle-switch">
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="7">
+        <span>7 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="28">
+        <span>28 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="30">
+        <span>30 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="60">
+        <span>60 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="90">
+        <span>90 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="180">
+        <span>6 months</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="365">
+        <span>1 year</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="1825">
+        <span>5 years</span>
+    </label>
+</div>
 <h1>Downloads by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
@@ -27,17 +94,72 @@
     <canvas id="downloadsChart"></canvas>
 </div>
 <script>
-    const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
-    async function getCurrentHistoryData() {
-        try{
-            const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
-            return await fetchedData.json();
-        } catch (e) {
-            console.error("No previous data", e);
-        }
-        return null;
-    }
     async function plotData() {
+        let timePeriod = localStorage.getItem("HistoryViewWindow") || "30";
+        let currentlyPlottingData;
+        const radioButtons = document.querySelectorAll('input[name="timeDuration"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    console.log(`Selected Duration: ${this.value} days`);
+                    localStorage.setItem("HistoryViewWindow", this.value);
+                    timePeriod = this.value;
+                    if(currentlyPlottingData){
+                        updateCharts(currentlyPlottingData);
+                    }
+                }
+            });
+        });
+
+        // Function to get the currently selected option
+        function getSelectedOption() {
+            const selectedRadio = document.querySelector('input[name="timeDuration"]:checked');
+            return selectedRadio ? selectedRadio.value : null;
+        }
+
+        // Function to set a selected option
+        function setSelectedOption(value) {
+            const radioToSelect = document.querySelector(`input[name="timeDuration"][value="${value}"]`);
+            if (radioToSelect) {
+                radioToSelect.checked = true;
+                console.log(`Set Duration to: ${value} days`);
+            }
+        }
+
+        setSelectedOption(timePeriod);
+        function trimAndReverseVersionData(data, days) {
+            data = structuredClone(data);
+            const trimmedData = {};
+
+            const versionData = data;
+            const { timeSeries } = versionData;
+            const trimIndex = Math.max(timeSeries.length - days, 0); // Calculate index to start slicing from
+
+            // Create a new object for the version, initializing with a trimmed timeSeries
+            // the array is sorted in time latest at start, so we need to reverse it too.
+            trimmedData.timeSeries = timeSeries.reverse().slice(trimIndex);
+
+            // Go through each key except timeSeries in the version data
+            Object.keys(versionData).forEach(key => {
+                if (!["timeSeries", "publishDate"].includes(key)) {
+                    // Trim each array to the same length as the new timeSeries
+                    trimmedData[key] = versionData[key].reverse().slice(trimIndex);
+                }
+            });
+
+            return trimmedData;
+        }
+
+        const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
+        async function getCurrentHistoryData() {
+            try{
+                const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
+                return await fetchedData.json();
+            } catch (e) {
+                console.error("No previous data", e);
+            }
+            return null;
+        }
         let downloadsChart, platformChart, installerChart, updaterChart;
         const historyData = await getCurrentHistoryData();
         const data = historyData.prodReleaseHistory;
@@ -61,7 +183,9 @@
         console.log("latest Version", latestVersion);
         versionSelector.value = latestVersion;
         updateCharts(data[latestVersion]);
-        function updateCharts(data) {
+        function updateCharts(inputData) {
+            currentlyPlottingData = inputData;
+            const data = trimAndReverseVersionData(inputData, parseInt(timePeriod));
             // Calculate platform aggregates
             function sumDownloads(dataArray) {
                 return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));

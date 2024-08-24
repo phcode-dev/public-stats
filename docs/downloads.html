@@ -215,13 +215,14 @@
         return versionList.slice(0, n).reverse();
     }
     async function plotData() {
+        const VERSION_LS_KEY = "lastNVersions";
         function createChartData(data, labelPrefix) {
             return {
                 labels: data.timeSeries,
                 datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
                     label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
                     data: data[key],
-                    borderColor: getRandomColor(),
+                    borderColor: getLineColor(key),
                     tension: 0.1
                 }))
             };
@@ -280,6 +281,41 @@
             return selectedRadio ? selectedRadio.value : null;
         }
 
+        function getLineColor(labelStr) {
+            // Array of 50 predefined vibrant colors, suitable for visibility against white background
+            const colors = [
+                "#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF3380", // Vibrant primary colors
+                "#FFC300", "#C70039", "#900C3F", "#581845", "#4C4C6D", // Warm and cool tones
+                "#FF6347", "#4682B4", "#3CB371", "#BDB76B", "#DC143C", // Mix of saturation
+                "#00FFFF", "#00008B", "#008B8B", "#B8860B", "#006400", // Deep blues and greens
+                "#8B008B", "#556B2F", "#FF8C00", "#9932CC", "#8B0000", // Purples and dark reds
+                "#E9967A", "#8FBC8F", "#483D8B", "#2F4F4F", "#00CED1", // Earth tones and cyan
+                "#9400D3", "#FF1493", "#00BFFF", "#1E90FF", "#B22222", // Bright and bold
+                "#FF4500", "#6A5ACD", "#708090", "#FF6347", "#4682B4", // Additional vibrant options
+                "#DA70D6", "#40E0D0", "#6495ED", "#DC143C", "#CD5C5C", // Reds and purples
+                "#FF69B4", "#BA55D3", "#9370DB", "#3CB371", "#7B68EE"  // Pinks and soft blues
+            ];
+
+            // A simple hash function to hash the input string
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash);
+            }
+
+            // Generate a numeric hash of the label string
+            const hash = simpleHash(labelStr);
+
+            // Use the hash to pick a color from the array
+            const index = hash % colors.length; // Use modulo to wrap around the array length
+            return colors[index];
+        }
+
+
         // Function to set a selected option
         function setSelectedOption(value) {
             const radioToSelect = document.querySelector(`input[name="timeDuration"][value="${value}"]`);
@@ -300,9 +336,11 @@
 
         versionInput.addEventListener('change', ()=>{
             if(currentlyPlottingData){
+                localStorage.setItem("VERSION_LS_KEY", versionInput.value);
                 updateCharts(currentlyPlottingData);
             }
         });
+        versionInput.value = localStorage.getItem("VERSION_LS_KEY") || 5;
 
         function setAggregateMode(isAggregate) {
             const toggle = document.getElementById('toggleButton');

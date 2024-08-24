@@ -2,25 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Public Stats</title>
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "ns5keb6nnh");
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0TD6PVRN4L"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-0TD6PVRN4L');
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>phcode.io Public Stats</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+        .navbar { background: #333; color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .navbar a, .navbar a img { color: #fff; text-decoration: none; }
+        .navbar img.logo { height: 40px; }
+        .content { display: flex; justify-content: center; margin-top: 20px; padding: 20px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; width: 30%; text-align: center; }
+        .card img { max-width: 100%; height: auto; }
+        .card a { text-decoration: none; color: #333; }
+        .card-title { font-size: 18px; font-weight: bold; margin-top: 15px; }
+        .card-description { font-size: 14px; margin-top: 5px; }
+        .get-code:hover {text-decoration: underline;}
+    </style>
 </head>
 <body>
-<a href="downloads.html">GitHub Downloads Stats</a>
+<div class="navbar">
+    <div class="navbar-left" style="display: flex; justify-content: center; align-items: center;">
+        <img
+                width="20px" src="images/phoenix-logo.svg" alt="phcode logo" class="logo">
+        Phoenix code Public Stats
+    </div>
+    <div class="navbar-right" style="display: flex; justify-content: center; align-items: center;">
+        <img
+                width="20px" src="images/download-svgrepo-com.svg" alt="phcode logo" class="logo">
+        <div class="get-code" style="padding-right: 25px;">
+            <a href="https://phcode.io" target="_blank">Get Phoenix Code</a>
+        </div>
+        <div>
+            <a href="https://github.com/phcode-dev/public-stats" target="_blank">
+                <img width="20px" src="images/github-white.svg" alt="GitHub">
+            </a>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="card">
+        <a href="download-graphs.html">
+            <img width="50%" src="images/chart-line-svgrepo-com.svg" alt="Download Stats Graph">
+            <div class="card-title">Download Stats</div>
+            <div class="card-description">Explore detailed download statistics of Phoenix Code Editor.</div>
+        </a>
+    </div>
+</div>
 </body>
 </html>

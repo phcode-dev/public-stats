@@ -175,6 +175,13 @@
         <span>5 years</span>
     </label>
 </div>
+<h1>Downloads for past versions</h1>
+<label>
+    See data for Last <input type="text" id="versionInput" value="5" style="width: 20px;"> versions
+</label>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="versionChart"></canvas>
+</div>
 <h1>All downloads by OS</h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
@@ -192,12 +199,67 @@
     <canvas id="downloadsChart"></canvas>
 </div>
 <script>
+    function filterLatestNVersions(versionList, n) {
+        // Sorting the version list in descending order
+        versionList.sort((a, b) => {
+            if (compareVersions.compare(b, a, "<")) {
+                return -1;
+            } else if (compareVersions.compare(b, a, ">")) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        // Return the top n versions
+        return versionList.slice(0, n).reverse();
+    }
     async function plotData() {
+        const VERSION_LS_KEY = "lastNVersions";
+        function createChartData(data, labelPrefix) {
+            return {
+                labels: data.timeSeries,
+                datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
+                    label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
+                    data: data[key],
+                    borderColor: getLineColor(key),
+                    tension: 0.1
+                }))
+            };
+        }
+
+        function createChartOptions() {
+            return {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            };
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
         let timePeriod = localStorage.getItem("HistoryViewWindow") || "30";
         if(!localStorage.getItem("isAggregateMode")){
             localStorage.setItem("isAggregateMode", "yes");
         }
         let isAggregateMode = (localStorage.getItem("isAggregateMode") === "yes");
+        const versionInput = document.getElementById('versionInput');
         let currentlyPlottingData;
         const radioButtons = document.querySelectorAll('input[name="timeDuration"]');
         radioButtons.forEach(radio => {
@@ -219,6 +281,41 @@
             return selectedRadio ? selectedRadio.value : null;
         }
 
+        function getLineColor(labelStr) {
+            // Array of 50 predefined vibrant colors, suitable for visibility against white background
+            const colors = [
+                "#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF3380", // Vibrant primary colors
+                "#FFC300", "#C70039", "#900C3F", "#581845", "#4C4C6D", // Warm and cool tones
+                "#FF6347", "#4682B4", "#3CB371", "#BDB76B", "#DC143C", // Mix of saturation
+                "#00FFFF", "#00008B", "#008B8B", "#B8860B", "#006400", // Deep blues and greens
+                "#8B008B", "#556B2F", "#FF8C00", "#9932CC", "#8B0000", // Purples and dark reds
+                "#E9967A", "#8FBC8F", "#483D8B", "#2F4F4F", "#00CED1", // Earth tones and cyan
+                "#9400D3", "#FF1493", "#00BFFF", "#1E90FF", "#B22222", // Bright and bold
+                "#FF4500", "#6A5ACD", "#708090", "#FF6347", "#4682B4", // Additional vibrant options
+                "#DA70D6", "#40E0D0", "#6495ED", "#DC143C", "#CD5C5C", // Reds and purples
+                "#FF69B4", "#BA55D3", "#9370DB", "#3CB371", "#7B68EE"  // Pinks and soft blues
+            ];
+
+            // A simple hash function to hash the input string
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash);
+            }
+
+            // Generate a numeric hash of the label string
+            const hash = simpleHash(labelStr);
+
+            // Use the hash to pick a color from the array
+            const index = hash % colors.length; // Use modulo to wrap around the array length
+            return colors[index];
+        }
+
+
         // Function to set a selected option
         function setSelectedOption(value) {
             const radioToSelect = document.querySelector(`input[name="timeDuration"][value="${value}"]`);
@@ -236,6 +333,14 @@
                 updateCharts(currentlyPlottingData);
             }
         });
+
+        versionInput.addEventListener('change', ()=>{
+            if(currentlyPlottingData){
+                localStorage.setItem("VERSION_LS_KEY", versionInput.value);
+                updateCharts(currentlyPlottingData);
+            }
+        });
+        versionInput.value = localStorage.getItem("VERSION_LS_KEY") || 5;
 
         function setAggregateMode(isAggregate) {
             const toggle = document.getElementById('toggleButton');
@@ -317,12 +422,12 @@
             }
             return null;
         }
-        let downloadsChart, platformChart, installerChart, updaterChart;
+        let downloadsChart, platformChart, installerChart, updaterChart, versionsChart;
         const historyData = await getCurrentHistoryData();
-        const data = historyData.prodReleaseHistory;
+        const prodReleaseHistory = historyData.prodReleaseHistory;
 
         const versionSelector = document.getElementById('versionSelector');
-        const versions = Object.keys(data);
+        const versions = Object.keys(prodReleaseHistory);
         let latestVersion = versions[0];
         versions.forEach(version => {
             const option = document.createElement('option');
@@ -335,14 +440,62 @@
         });
         // Initialize charts with the first version selected
         versionSelector.addEventListener('change', () => {
-            updateCharts(data[versionSelector.value]);
+            updateCharts(prodReleaseHistory[versionSelector.value]);
         });
         console.log("latest Version", latestVersion);
         versionSelector.value = latestVersion;
-        updateCharts(data[latestVersion]);
+        async function plotVersionGraph() {
+            const days = parseInt(timePeriod);
+            const allVersions = Object.keys(prodReleaseHistory);
+            const lastNVersions = filterLatestNVersions(allVersions, versionInput.value);
+            console.log(`Computing downloads for lat ${versionInput.value} versions`);
+            let largestTimeSeries = [];
+            const versionData = {};
+            for(let version of lastNVersions){
+                const inputData = prodReleaseHistory[version];
+                const releaseData = trimAndReverseVersionData(inputData, days, !isAggregateMode, version);
+                if(largestTimeSeries.length < releaseData.timeSeries.length){
+                    largestTimeSeries = releaseData.timeSeries;
+                }
+                versionData[version] = releaseData.totalDownloads;
+            }
+            let total = new Array(largestTimeSeries.length).fill(0);
+            for(let version of lastNVersions){
+                let versionDownloads = versionData[version];
+                if(versionDownloads.length < largestTimeSeries.length){
+                    // this is a new release with some data missing at start, null it
+                    const fillNullNum = largestTimeSeries.length - versionDownloads.length;
+                    versionData[version] = new Array(fillNullNum).fill(null).concat(versionDownloads);
+                    versionDownloads = versionData[version];
+                }
+                if(versionDownloads.length !== total.length){
+                    alert(`Error! something went wrong computing download for past ${versionInput.value} versions.`);
+                    return;
+                }
+                for(let i =0; i<total.length; i++){
+                    if(versionDownloads[i]){
+                        total[i] = total[i] + versionDownloads[i];
+                    }
+                }
+            }
+            versionData["Total"] = total;
+            versionData["timeSeries"] = largestTimeSeries;
+            console.log(versionData);
+            const ctxVersion = document.getElementById('versionChart').getContext('2d');
+            if(versionsChart){
+                versionsChart.destroy();
+            }
+            versionsChart = new Chart(ctxVersion, {
+                type: 'line',
+                data: createChartData(versionData, ''),
+                options: createChartOptions()
+            });
+        }
+        updateCharts(prodReleaseHistory[latestVersion]);
         function updateCharts(inputData) {
             currentlyPlottingData = inputData;
             const data = trimAndReverseVersionData(inputData, parseInt(timePeriod), !isAggregateMode, versionSelector.value);
+            plotVersionGraph();
             // Calculate platform aggregates
             function sumDownloads(dataArray) {
                 return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
@@ -419,44 +572,6 @@
                 },
                 options: createChartOptions()
             });
-
-            function createChartData(data, labelPrefix) {
-                return {
-                    labels: data.timeSeries,
-                    datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
-                        label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
-                        data: data[key],
-                        borderColor: getRandomColor(),
-                        tension: 0.1
-                    }))
-                };
-            }
-
-            function createChartOptions() {
-                return {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: false
-                };
-            }
-
-            function getRandomColor() {
-                const letters = '0123456789ABCDEF';
-                let color = '#';
-                for (let i = 0; i < 6; i++) {
-                    color += letters[Math.floor(Math.random() * 16)];
-                }
-                return color;
-            }
         }
     }
     plotData();

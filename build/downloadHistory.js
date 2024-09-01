@@ -68,7 +68,17 @@ function mergeHistory(existingEntry, releaseDetails, today) {
     for(let key of HISTORY_KEYS) {
         newHistory[key] = [];
     }
-    const LatestSortedTimes = Object.keys(timeMap).sort().reverse();
+    const LatestSortedTimes = Object.keys(timeMap)
+        .map(dateStr => {
+            // Split the date into parts
+            const parts = dateStr.split('-');
+            // Convert "dd-mm-yyyy" to "yyyy-mm-dd"
+            const isoStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            // Return an object that keeps track of the original date string and the date object
+            return { original: dateStr, date: new Date(isoStr) };
+        })
+        .sort((a, b) => b.date - a.date)
+        .map(obj => obj.original);
     for(let i=0; i<LatestSortedTimes.length; i++) {
         const time = LatestSortedTimes[i];
         newHistory.timeSeries.push(time);

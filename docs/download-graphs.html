@@ -22,6 +22,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src=https://unpkg.com/compare-versions/lib/umd/index.js></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <style>
         .toggle-switch {
             display: flex;
@@ -182,19 +183,19 @@
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="versionChart"></canvas>
 </div>
-<h1>All downloads by OS</h1>
+<h1>All downloads by OS <span class="version-select-text"></span></h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="platformChart"></canvas>
 </div>
-<h1>Installer downloads only by OS</h1>
+<h1>Installer downloads only by OS <span class="version-select-text"></span></h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="installerChart"></canvas>
 </div>
-<h1>Updates only by OS</h1>
+<h1>Updates only by OS <span class="version-select-text"></span></h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="updaterChart"></canvas>
 </div>
-<h1>Individual Assets</h1>
+<h1>Individual Assets <span class="version-select-text"></span></h1>
 <div style="width:80%; margin: 20px auto; height: 50vh;">
     <canvas id="downloadsChart"></canvas>
 </div>
@@ -448,6 +449,7 @@
             const days = parseInt(timePeriod);
             const allVersions = Object.keys(prodReleaseHistory);
             const lastNVersions = filterLatestNVersions(allVersions, versionInput.value);
+            $(".version-select-text").text(`- V${versionSelector.value}`);
             console.log(`Computing downloads for lat ${versionInput.value} versions`);
             let largestTimeSeries = [];
             const versionData = {};

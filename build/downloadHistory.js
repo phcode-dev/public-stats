@@ -125,8 +125,20 @@ function toStr(obj) {
     return JSON.stringify(obj, null, 2);
 }
 
+function isRunningInGitHubActions() {
+    return process.env.GITHUB_ACTIONS === 'true';
+}
+
 const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
 async function getCurrentHistoryData() {
+    if(isRunningInGitHubActions()){
+        // in github actions, there can be times when fetch fails in the automated hourly
+        // workflows. In that case we should fail early, else it will reset the history
+        // if we do try catch and return null. We dont want automated workflows resetting
+        // history.
+        const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
+        return fetchedData.json();
+    }
     try{
         const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
         return await fetchedData.json();

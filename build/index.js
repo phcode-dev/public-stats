@@ -48,6 +48,7 @@ function ensureDirectoryExists(dirPath) {
 async function updateDocs() {
     ensureDirectoryExists('docs/generated');
     const releases = await getReleaseDetails();
+    console.log("Releases Details from GitHub", JSON.stringify(releases, null, 2));
     // for debugging uncomment the below lines  and comment the github fetch line
     // fs.writeFileSync('temp/release.json', JSON.stringify(releases, null, 2)); // only do this once and comment
     //const releases = JSON.parse(fs.readFileSync('temp/release.json'));

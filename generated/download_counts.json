@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-07-19T12:06:16.801Z",
-  "totalDownloads": 727373,
+  "timestamp": "2025-07-19T13:11:46.430Z",
+  "totalDownloads": 727452,
   "totalDownloadRatePerMinute": 1,
-  "installerDownloads": 596175,
-  "updateDownloads": 131198,
+  "installerDownloads": 596248,
+  "updateDownloads": 131204,
   "downloadProofLink": "https://github.com/phcode-dev/public-stats"
 }

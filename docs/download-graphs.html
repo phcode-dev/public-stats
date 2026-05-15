@@ -249,6 +249,8 @@
         setSelectedOption(timePeriod);
 
         function computeDailyDownloads(stats) {
+            // The first entry is the cumulative count up to that day, not a daily
+            // diff — callers must trim it from the rendered series.
             const dailyDownloads = [];
             if(stats.length >= 1){
                 dailyDownloads.push(stats[0]);
@@ -271,16 +273,15 @@
                 computeDailyData = false;
             }
             let shouldTrimFirstElem = false;
-            if(computeDailyData && (timeSeries.length > days || compareVersions.satisfies(version, "<=3.8.8"))){
-                // if we have more stats, then we add one more day so that we can compute daily downloads
-                // For eg, if we are computing 7 day daily downloads, and we have 8 days stats, we compute the 7th
-                // day downloads by subtracting 7th dya amd 8th day downloads. but the array will have 8 entries,
-                // the first being the absolute 8th day download count, which we should trim.
-
-                // for versions smaller than 3.8.8, we started creating history data mid way and we need to trim the
-                // first element which is the aggregate of several months of downloads, not what we intend for daily
-                // downloads
-                days = days + 1;
+            if(computeDailyData){
+                // In daily mode the first datapoint is the absolute cumulative count
+                // (and for versions <=3.8.8 it's months of aggregated downloads, plus
+                // resets can leave the earliest entry as a huge cumulative baseline).
+                // Always trim it. If we have more history than requested, extend the
+                // slice by one day so the chart still spans the full window.
+                if(timeSeries.length > days){
+                    days = days + 1;
+                }
                 shouldTrimFirstElem = true;
             }
             const trimIndex = Math.max(timeSeries.length - days, 0); // Calculate index to start slicing from

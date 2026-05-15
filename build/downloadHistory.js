@@ -1,5 +1,6 @@
 const fs = require('fs');
 const {SUFFIX_TO_NAME_MAP, RELEASE_ASSET_SUFFIXES_ALL} = require("./constants");
+const {fetchWithRetries} = require("./fetchWithRetries");
 
 const ALL_SUFFIXES = Object.values(RELEASE_ASSET_SUFFIXES_ALL);
 function getAssetType(assetName) {
@@ -125,27 +126,19 @@ function toStr(obj) {
     return JSON.stringify(obj, null, 2);
 }
 
-function isRunningInGitHubActions() {
-    return process.env.GITHUB_ACTIONS === 'true';
+const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
+
+function validateHistoryPayload(data) {
+    if (!data || typeof data !== 'object') return 'response was not an object';
+    if (!data.prodReleaseHistory || typeof data.prodReleaseHistory !== 'object') {
+        return 'missing prodReleaseHistory';
+    }
+    if (Object.keys(data.prodReleaseHistory).length === 0) return 'prodReleaseHistory is empty';
+    return null;
 }
 
-const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
 async function getCurrentHistoryData() {
-    if(isRunningInGitHubActions()){
-        // in github actions, there can be times when fetch fails in the automated hourly
-        // workflows. In that case we should fail early, else it will reset the history
-        // if we do try catch and return null. We dont want automated workflows resetting
-        // history.
-        const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
-        return fetchedData.json();
-    }
-    try{
-        const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
-        return await fetchedData.json();
-    } catch (e) {
-        console.error("No previous data", e);
-    }
-    return null;
+    return fetchWithRetries(DOWNLOAD_HISTORY_URL, validateHistoryPayload, 'download_history');
 }
 
 async function updateDownloadHistory(releases) {

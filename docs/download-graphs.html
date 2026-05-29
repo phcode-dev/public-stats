@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phoenix Code — Download Stats</title>
-
-    <!-- Microsoft Clarity -->
+    <title>Download Stats Chart</title>
     <script type="text/javascript">
         (function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -19,765 +17,469 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
+
         gtag('config', 'G-0TD6PVRN4L');
     </script>
-
-    <!-- Fonts + icons (zero-build, CDN) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <!-- Charting -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://unpkg.com/compare-versions/lib/umd/index.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src=https://unpkg.com/compare-versions/lib/umd/index.js></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="download-graphs.css">
 </head>
 <body>
-<header class="site-header">
-    <img class="logo" src="images/phoenix-logo.svg" alt="Phoenix Code logo">
-    <h1>Phoenix Code <span class="accent">Download Stats</span></h1>
-    <div class="header-spacer"></div>
-    <div class="header-actions">
-        <a class="btn-download" href="https://phcode.io" target="_blank" rel="noopener" title="Download Phoenix Code"><i class="fa-solid fa-download"></i> <span class="btn-text">Download Phoenix Code</span></a>
-        <a class="icon-btn" href="https://github.com/phcode-dev/public-stats" target="_blank" rel="noopener" title="Data source on GitHub" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-        <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
-    </div>
-</header>
-
-<main>
-    <!-- LOADING / ERROR -->
-    <div id="loadingState" class="state">
-        <div class="spinner"></div>
-        <h3>Loading download statistics…</h3>
-        <p>Fetching the latest data from GitHub Releases.</p>
-    </div>
-    <div id="errorState" class="state" hidden>
-        <div class="ic"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h3>Couldn't load the stats</h3>
-        <p id="errorMsg">Please try again shortly.</p>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="dashboard" hidden>
-        <!-- ===== OVERVIEW (public) ===== -->
-        <div class="section-title"><i class="fa-solid fa-chart-line ic"></i> Overview
-            <span class="section-sub" id="updatedLabel"></span>
-        </div>
-
-        <div class="kpi-grid" id="kpiGrid"><!-- injected --></div>
-
-        <div class="card" style="margin-top:20px;">
-            <div class="card-head">
-                <h3><i class="fa-solid fa-arrow-trend-up ic"></i> Growth — all versions combined</h3>
-                <div class="spacer"></div>
-                <div class="segmented" id="overviewWindow" role="group" aria-label="Time window">
-                    <label><input type="radio" name="ovwin" value="90"><span>90d</span></label>
-                    <label><input type="radio" name="ovwin" value="180"><span>6m</span></label>
-                    <label><input type="radio" name="ovwin" value="365" checked><span>1y</span></label>
-                    <label><input type="radio" name="ovwin" value="100000"><span>All</span></label>
-                </div>
-            </div>
-            <div class="card-note"><i class="fa-solid fa-circle-info"></i> Bars = net new downloads per day · line = cumulative total · dashed = 7‑day average.</div>
-            <div class="chart-wrap tall"><canvas id="growthChart"></canvas></div>
-        </div>
-
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-layer-group ic"></i> Platform mix over time</h3></div>
-                <div class="card-note"><i class="fa-solid fa-circle-info"></i> Share of the cumulative install base by OS.</div>
-                <div class="chart-wrap"><canvas id="platformMixChart"></canvas></div>
-            </div>
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-chart-pie ic"></i> Current split</h3></div>
-                <div class="card-note"><i class="fa-solid fa-circle-info"></i> Latest cumulative totals.</div>
-                <div class="chart-wrap"><canvas id="platformDonut"></canvas></div>
-            </div>
-        </div>
-
-        <!-- ===== ADVANCED ===== -->
-        <div class="section-title"><i class="fa-solid fa-sliders ic"></i> Advanced analytics
-            <span class="section-sub">cohorts · retention · per‑version · individual assets</span>
-        </div>
-
-        <div id="advancedPanel">
-            <div class="controls">
-                <div class="control">
-                    <label for="versionSelector">Focus version</label>
-                    <div class="control-row">
-                        <select id="versionSelector"></select>
-                    </div>
-                </div>
-                <div class="control">
-                    <label>Mode</label>
-                    <div class="segmented" id="modeSeg" role="group" aria-label="Daily or aggregate">
-                        <label><input type="radio" name="mode" value="daily"><span>Daily</span></label>
-                        <label><input type="radio" name="mode" value="aggregate" checked><span>Cumulative</span></label>
-                    </div>
-                </div>
-                <div class="control">
-                    <label>Show last</label>
-                    <div class="segmented" id="windowSeg" role="group" aria-label="Time window">
-                        <label><input type="radio" name="timeDuration" value="7"><span>7d</span></label>
-                        <label><input type="radio" name="timeDuration" value="30"><span>30d</span></label>
-                        <label><input type="radio" name="timeDuration" value="90"><span>90d</span></label>
-                        <label><input type="radio" name="timeDuration" value="180"><span>6m</span></label>
-                        <label><input type="radio" name="timeDuration" value="365"><span>1y</span></label>
-                        <label><input type="radio" name="timeDuration" value="1825"><span>5y</span></label>
-                    </div>
-                </div>
-                <div class="control">
-                    <label for="versionInput">Compare last N versions</label>
-                    <div class="control-row">
-                        <input type="number" min="1" max="50" class="num" id="versionInput" value="5">
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-code-branch ic"></i> Downloads by version <span class="version-select-text"></span></h3></div>
-                <div class="chart-wrap"><canvas id="versionChart"></canvas></div>
-            </div>
-
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-head"><h3><i class="fa-solid fa-rotate ic"></i> Engagement — update : install ratio</h3></div>
-                    <div class="card-note"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i> Linux excluded — it ships no separate updater asset.</div>
-                    <div class="chart-wrap"><canvas id="ratioChart"></canvas></div>
-                </div>
-                <div class="card">
-                    <div class="card-head"><h3><i class="fa-brands fa-apple ic"></i> Apple Silicon vs Intel</h3></div>
-                    <div class="card-note"><i class="fa-solid fa-circle-info"></i> <span id="siliconNote">Cumulative macOS downloads by architecture.</span></div>
-                    <div class="chart-wrap"><canvas id="siliconChart"></canvas></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-flag-checkered ic"></i> Release performance (aligned to launch day)</h3></div>
-                <div class="card-note"><i class="fa-solid fa-circle-info"></i> <span id="cohortNote">Each release's cumulative downloads in its first 60 days since launch — compare launches apples‑to‑apples.</span></div>
-                <div class="chart-wrap tall"><canvas id="cohortChart"></canvas></div>
-            </div>
-
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-head"><h3><i class="fa-solid fa-box-open ic"></i> Installers by OS <span class="version-select-text"></span></h3></div>
-                    <div class="chart-wrap"><canvas id="installerChart"></canvas></div>
-                </div>
-                <div class="card">
-                    <div class="card-head"><h3><i class="fa-solid fa-cloud-arrow-down ic"></i> Updates by OS <span class="version-select-text"></span></h3></div>
-                    <div class="chart-wrap"><canvas id="updaterChart"></canvas></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-desktop ic"></i> All downloads by OS <span class="version-select-text"></span></h3></div>
-                <div class="chart-wrap"><canvas id="platformChart"></canvas></div>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3><i class="fa-solid fa-cubes ic"></i> Individual assets <span class="version-select-text"></span></h3></div>
-                <div class="card-note"><i class="fa-solid fa-circle-info"></i> Raw per‑file download counts, including the new Linux AppImage.</div>
-                <div class="chart-wrap tall"><canvas id="assetsChart"></canvas></div>
-            </div>
-        </div>
-    </div>
-</main>
-
-<footer class="site-footer">
-    <a href="https://github.com/phcode-dev/public-stats" target="_blank" rel="noopener"><i class="fa-brands fa-github ic"></i> View source</a>
-    <span class="spacer"></span>
-    <span>Made with <i class="fa-solid fa-heart" style="color:var(--brand-red)"></i> in <a href="https://phcode.io" target="_blank" rel="noopener">phcode.io</a></span>
-</footer>
-
+<h1>Version Selector</h1>
+<div style="display: flex; width: 192px; justify-content: space-between;">
+    <select id="versionSelector"></select>
+    <label class="switch">
+        <input type="checkbox" id="toggleButton" />
+        <span class="slider">
+            <span class="label daily">Daily</span>
+            <span class="label aggregate">Aggregate</span>
+        </span>
+    </label>
+</div>
+<h2>Show Last</h2>
+<div class="toggle-switch">
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="7">
+        <span>7 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="28">
+        <span>28 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="30">
+        <span>30 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="60">
+        <span>60 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="90">
+        <span>90 days</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="180">
+        <span>6 months</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="365">
+        <span>1 year</span>
+    </label>
+    <label class="toggle-label">
+        <input type="radio" name="timeDuration" value="1825">
+        <span>5 years</span>
+    </label>
+</div>
+<h1>Downloads for past versions</h1>
+<label>
+    See data for Last <input type="text" id="versionInput" value="5" style="width: 20px;"> versions
+</label>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="versionChart"></canvas>
+</div>
+<h1>All downloads by OS <span class="version-select-text"></span></h1>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="platformChart"></canvas>
+</div>
+<h1>Installer downloads only by OS <span class="version-select-text"></span></h1>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="installerChart"></canvas>
+</div>
+<h1>Updates only by OS <span class="version-select-text"></span></h1>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="updaterChart"></canvas>
+</div>
+<h1>Individual Assets <span class="version-select-text"></span></h1>
+<div style="width:80%; margin: 20px auto; height: 50vh;">
+    <canvas id="downloadsChart"></canvas>
+</div>
 <script>
-/* ============================================================
-   Phoenix Code — Download Stats Dashboard (zero-build)
-   ============================================================ */
-(function () {
-    "use strict";
-
-    // Try relative path first (works locally + in prod), then fall back to absolute.
-    const HISTORY_URLS = ["generated/download_history.json", "https://public-stats.phcode.io/generated/download_history.json"];
-    const COUNTS_URLS  = ["generated/download_counts.json",  "https://public-stats.phcode.io/generated/download_counts.json"];
-
-    const ASSET_GROUPS = {
-        linux:           ["LINUX_X64_GLIBC_2_31_INSTALLER", "LINUX_X64_GLIBC_2_35_INSTALLER", "LINUX_X64_APPIMAGE_INSTALLER"],
-        windows:         ["WINDOWS_X64_INSTALLER", "WINDOWS_X64_UPDATER"],
-        mac:             ["MAC_M1_INSTALLER", "MAC_X64_INSTALLER", "MAC_M1_UPDATER", "MAC_X64_UPDATER"],
-        windowsInstaller:["WINDOWS_X64_INSTALLER"],
-        windowsUpdater:  ["WINDOWS_X64_UPDATER"],
-        macInstaller:    ["MAC_M1_INSTALLER", "MAC_X64_INSTALLER"],
-        macUpdater:      ["MAC_M1_UPDATER", "MAC_X64_UPDATER"],
-        macSilicon:      ["MAC_M1_INSTALLER", "MAC_M1_UPDATER"],
-        macIntel:        ["MAC_X64_INSTALLER", "MAC_X64_UPDATER"]
-    };
-
-    let historyData, countsData, prodReleaseHistory, versionList, latestVersion;
-    const charts = {};
-
-    /* ---------- utilities ---------- */
-    const $ = (sel) => document.querySelector(sel);
-    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-    const DAY = 86400000;
-
-    function parseDMY(s) {
-        const p = s.split("-");
-        return new Date(Date.UTC(+p[2], +p[1] - 1, +p[0]));
-    }
-    function fmt(n) {
-        if (n === null || n === undefined || isNaN(n)) return "—";
-        return Math.round(n).toLocaleString("en-US");
-    }
-    function fmtCompact(n) {
-        if (isNaN(n)) return "—";
-        const a = Math.abs(n);
-        if (a >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M";
-        if (a >= 1e3) return (n / 1e3).toFixed(1).replace(/\.?0+$/, "") + "k";
-        return String(Math.round(n));
-    }
-    async function fetchFirst(urls, validate) {
-        let lastErr;
-        for (const url of urls) {
-            try {
-                const r = await fetch(url, { cache: "no-store" });
-                if (!r.ok) throw new Error("HTTP " + r.status);
-                const j = await r.json();
-                const err = validate(j);
-                if (err) throw new Error(err);
-                return j;
-            } catch (e) { lastErr = e; }
-        }
-        throw lastErr;
-    }
-
-    /* ---------- global series (sum across all versions, forward-filled) ---------- */
-    // Returns { labels:[dd-mm-yyyy asc], ts:[ms], totals:[cumulative] } for the given asset keys.
-    function buildGlobalSeries(keys) {
-        const allDates = new Set();
-        const versionMaps = [];
-        for (const e of Object.values(prodReleaseHistory)) {
-            const map = new Map();
-            for (let i = 0; i < e.timeSeries.length; i++) {
-                let sum = 0;
-                for (const k of keys) if (e[k]) sum += e[k][i] || 0;
-                map.set(e.timeSeries[i], sum);
-                allDates.add(e.timeSeries[i]);
-            }
-            versionMaps.push(map);
-        }
-        const labels = [...allDates].sort((a, b) => parseDMY(a) - parseDMY(b));
-        const ts = labels.map((d) => parseDMY(d).getTime());
-        const totals = new Array(labels.length).fill(0);
-        for (const map of versionMaps) {
-            let last = 0, started = false;
-            for (let i = 0; i < labels.length; i++) {
-                if (map.has(labels[i])) { last = map.get(labels[i]); started = true; }
-                if (started) totals[i] += last;
-            }
-        }
-        return { labels, ts, totals };
-    }
-    // cumulative value at the latest date <= (latestDate - daysBack)
-    function valueDaysAgo(series, daysBack) {
-        const target = series.ts[series.ts.length - 1] - daysBack * DAY;
-        let val = 0;
-        for (let i = 0; i < series.ts.length; i++) {
-            if (series.ts[i] <= target) val = series.totals[i]; else break;
-        }
-        return val;
-    }
-    function dailyFromCumulative(totals) {
-        const out = new Array(totals.length).fill(null);
-        for (let i = 1; i < totals.length; i++) out[i] = totals[i] - totals[i - 1];
-        return out;
-    }
-    function movingAverage(arr, win) {
-        return arr.map((_, i) => {
-            let s = 0, c = 0;
-            for (let j = Math.max(0, i - win + 1); j <= i; j++) {
-                if (arr[j] != null) { s += arr[j]; c++; }
-            }
-            return c ? s / c : null;
-        });
-    }
-    function sliceByDays(series, days) {
-        if (days >= 1e5) return { ...series, _from: 0 };
-        const cutoff = series.ts[series.ts.length - 1] - days * DAY;
-        let from = 0;
-        while (from < series.ts.length && series.ts[from] < cutoff) from++;
-        return {
-            labels: series.labels.slice(from),
-            ts: series.ts.slice(from),
-            totals: series.totals.slice(from),
-            _from: from
-        };
-    }
-
-    // Daily net-new from a cumulative series: index 0 = null (baseline), rest clamped at 0 (ignore resets).
-    function diffClamped(arr) {
-        return arr.map((v, i) => (i === 0 ? null : Math.max(0, arr[i] - arr[i - 1])));
-    }
-    function advModeIsDaily() {
-        const el = document.querySelector('input[name="mode"]:checked');
-        return el ? el.value === "daily" : false;
-    }
-
-    /* ---------- chart theming ---------- */
-    function applyChartDefaults() {
-        Chart.defaults.font.family = "Inter, sans-serif";
-        Chart.defaults.color = cssVar("--muted");
-        Chart.defaults.borderColor = cssVar("--grid");
-    }
-    function baseScales(extra) {
-        return Object.assign({
-            x: { type: "time", time: { minUnit: "day", tooltipFormat: "dd MMM yyyy", displayFormats: { day: "dd MMM", week: "dd MMM", month: "MMM yyyy" } }, grid: { color: cssVar("--grid") }, ticks: { maxRotation: 0, autoSkipPadding: 24 } },
-            y: { beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { callback: (v) => fmtCompact(v) } }
-        }, extra || {});
-    }
-    function baseOptions(opts) {
-        return Object.assign({
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-                legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)}` } }
-            }
-        }, opts || {});
-    }
-    function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
-    function points(labels, vals) { return labels.map((l, i) => ({ x: parseDMY(l), y: vals[i] })); }
-
-    /* ============================================================
-       OVERVIEW
-       ============================================================ */
-    function renderKPIs() {
-        const g = buildGlobalSeries([...ASSET_GROUPS.windows, ...ASSET_GROUPS.mac, ...ASSET_GROUPS.linux]);
-        const totalAllTime = (countsData && countsData.totalDownloads) || g.totals[g.totals.length - 1];
-
-        const cur = g.totals[g.totals.length - 1];
-        const v30 = valueDaysAgo(g, 30), v60 = valueDaysAgo(g, 60);
-        const last30 = cur - v30, prior30 = v30 - v60;
-        const delta = prior30 > 0 ? ((last30 - prior30) / prior30) * 100 : null;
-
-        // latest version share of last-30d downloads
-        const lv = prodReleaseHistory[latestVersion];
-        // per-version last30 for latest version:
-        const lvTotals = lv.timeSeries.map((d, i) => ({ t: parseDMY(d).getTime(), v: lv.totalDownloads[i] })).sort((a, b) => a.t - b.t);
-        const lvCur = lvTotals[lvTotals.length - 1].v;
-        const lvTarget = lvTotals[lvTotals.length - 1].t - 30 * DAY;
-        let lv30base = 0; for (const r of lvTotals) { if (r.t <= lvTarget) lv30base = r.v; }
-        const lvLast30 = lvCur - lv30base;
-        const lvShare = last30 > 0 ? (lvLast30 / last30) * 100 : null;
-
-        // platform split (current cumulative)
-        const win = buildGlobalSeries(ASSET_GROUPS.windows).totals.at(-1);
-        const mac = buildGlobalSeries(ASSET_GROUPS.mac).totals.at(-1);
-        const lin = buildGlobalSeries(ASSET_GROUPS.linux).totals.at(-1);
-        const psum = win + mac + lin || 1;
-        const topPlat = [["Windows", win], ["macOS", mac], ["Linux", lin]].sort((a, b) => b[1] - a[1])[0];
-
-        const rate = countsData ? countsData.totalDownloadRatePerMinute : null;
-
-        const deltaHtml = delta == null ? `<span class="delta flat">n/a</span>`
-            : `<span class="delta ${delta >= 0 ? "up" : "down"}"><i class="fa-solid fa-arrow-${delta >= 0 ? "up" : "down"}"></i>${Math.abs(delta).toFixed(1)}%</span> vs prior 30d`;
-
-        const cards = [
-            { ic: "fa-download", label: "Total downloads", value: fmt(totalAllTime), sub: "all versions, all time" },
-            { ic: "fa-calendar-day", label: "Last 30 days", value: fmt(last30), sub: deltaHtml },
-            { ic: "fa-bolt", label: "Live rate", value: rate != null ? `${fmt(rate)}/min` : "—", sub: "current download velocity" },
-            { ic: "fa-star", label: `Latest · v${latestVersion}`, value: lvShare != null ? `${lvShare.toFixed(0)}%` : "—", sub: "of last‑30d downloads" },
-            { ic: "fa-desktop", label: "Top platform", value: topPlat[0], sub: `${((topPlat[1] / psum) * 100).toFixed(0)}% of install base` }
-        ];
-        $("#kpiGrid").innerHTML = cards.map((c) => `
-            <div class="kpi">
-                <div class="kpi-head"><span class="ic"><i class="fa-solid ${c.ic}"></i></span>${c.label}</div>
-                <div class="kpi-value">${c.value}</div>
-                <div class="kpi-sub">${c.sub}</div>
-            </div>`).join("");
-    }
-
-    function renderGrowth() {
-        const days = +document.querySelector('input[name="ovwin"]:checked').value;
-        const full = buildGlobalSeries([...ASSET_GROUPS.windows, ...ASSET_GROUPS.mac, ...ASSET_GROUPS.linux]);
-        const dailyFull = dailyFromCumulative(full.totals);
-        const maFull = movingAverage(dailyFull, 7);
-        const s = sliceByDays(full, days);
-        const from = s._from;
-        const daily = dailyFull.slice(from).map((v) => (v != null && v < 0 ? 0 : v)); // clamp reset dips
-        const ma = maFull.slice(from);
-        const cumul = full.totals.slice(from);
-        const labels = full.labels.slice(from);
-
-        destroyChart("growth");
-        charts.growth = new Chart($("#growthChart"), {
-            data: {
-                datasets: [
-                    { type: "bar", label: "Net new / day", data: points(labels, daily), backgroundColor: cssVar("--brand-amber-3"), borderRadius: 3, yAxisID: "y", order: 3 },
-                    { type: "line", label: "7‑day average", data: points(labels, ma), borderColor: cssVar("--brand-red"), borderDash: [5, 4], borderWidth: 2, pointRadius: 0, tension: 0.3, yAxisID: "y", order: 1 },
-                    { type: "line", label: "Cumulative total", data: points(labels, cumul), borderColor: cssVar("--c-mac"), backgroundColor: "transparent", borderWidth: 2, pointRadius: 0, tension: 0.25, yAxisID: "y1", order: 2 }
-                ]
-            },
-            options: baseOptions({
-                scales: baseScales({
-                    y: { position: "left", beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { callback: (v) => fmtCompact(v) }, title: { display: true, text: "downloads / day" } },
-                    y1: { position: "right", beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { callback: (v) => fmtCompact(v) }, title: { display: true, text: "cumulative" } }
-                })
-            })
-        });
-    }
-
-    function renderPlatformMix() {
-        const win = buildGlobalSeries(ASSET_GROUPS.windows);
-        const mac = buildGlobalSeries(ASSET_GROUPS.mac).totals;
-        const lin = buildGlobalSeries(ASSET_GROUPS.linux).totals;
-        const labels = win.labels;
-        const pct = (arr, i, tot) => (tot ? (arr[i] / tot) * 100 : 0);
-        const wD = [], mD = [], lD = [];
-        for (let i = 0; i < labels.length; i++) {
-            const tot = win.totals[i] + mac[i] + lin[i];
-            wD.push({ x: parseDMY(labels[i]), y: pct(win.totals, i, tot) });
-            mD.push({ x: parseDMY(labels[i]), y: pct(mac, i, tot) });
-            lD.push({ x: parseDMY(labels[i]), y: pct(lin, i, tot) });
-        }
-        // Latest share for each platform, surfaced in the legend so the stacked bands aren't misread.
-        const li = labels.length - 1;
-        const share = (d) => (li >= 0 && d[li] ? d[li].y.toFixed(1) : "0");
-        destroyChart("mix");
-        charts.mix = new Chart($("#platformMixChart"), {
-            type: "line",
-            data: { datasets: [
-                { label: `Windows · ${share(wD)}%`, data: wD, borderColor: cssVar("--surface"), backgroundColor: cssVar("--c-windows"), borderWidth: 1, fill: true, stack: "s", pointRadius: 0, tension: 0.2 },
-                { label: `macOS · ${share(mD)}%`, data: mD, borderColor: cssVar("--surface"), backgroundColor: cssVar("--c-mac"), borderWidth: 1, fill: true, stack: "s", pointRadius: 0, tension: 0.2 },
-                { label: `Linux · ${share(lD)}%`, data: lD, borderColor: cssVar("--surface"), backgroundColor: cssVar("--c-linux"), borderWidth: 1, fill: true, stack: "s", pointRadius: 0, tension: 0.2 }
-            ] },
-            options: baseOptions({
-                plugins: { legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                    tooltip: { callbacks: { label: (c) => `${c.dataset.label.split(" · ")[0]}: ${c.parsed.y.toFixed(1)}%` } } },
-                scales: baseScales({ y: { stacked: true, min: 0, max: 100, grid: { color: cssVar("--grid") }, ticks: { callback: (v) => v + "%" } } })
-            })
-        });
-    }
-
-    function renderDonut() {
-        const win = buildGlobalSeries(ASSET_GROUPS.windows).totals.at(-1);
-        const mac = buildGlobalSeries(ASSET_GROUPS.mac).totals.at(-1);
-        const lin = buildGlobalSeries(ASSET_GROUPS.linux).totals.at(-1);
-        destroyChart("donut");
-        charts.donut = new Chart($("#platformDonut"), {
-            type: "doughnut",
-            data: { labels: ["Windows", "macOS", "Linux"], datasets: [{ data: [win, mac, lin],
-                backgroundColor: [cssVar("--c-windows"), cssVar("--c-mac"), cssVar("--c-linux")], borderColor: cssVar("--surface"), borderWidth: 3 }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: "62%",
-                plugins: { legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                    tooltip: { callbacks: { label: (c) => { const t = c.dataset.data.reduce((a, b) => a + b, 0); return `${c.label}: ${fmt(c.parsed)} (${((c.parsed / t) * 100).toFixed(1)}%)`; } } } } }
-        });
-    }
-
-    /* ============================================================
-       ADVANCED — new analytics
-       ============================================================ */
-    function renderRatio() {
-        const days = +document.querySelector('input[name="timeDuration"]:checked').value;
-        const daily = advModeIsDaily();
-        const wInst = buildGlobalSeries(ASSET_GROUPS.windowsInstaller);
-        const labels = wInst.labels;
-        let winI = wInst.totals;
-        let winU = buildGlobalSeries(ASSET_GROUPS.windowsUpdater).totals;
-        let macI = buildGlobalSeries(ASSET_GROUPS.macInstaller).totals;
-        let macU = buildGlobalSeries(ASSET_GROUPS.macUpdater).totals;
-        if (daily) { winI = diffClamped(winI); winU = diffClamped(winU); macI = diffClamped(macI); macU = diffClamped(macU); }
-        const ratio = (u, iarr, i) => (iarr[i] != null && u[i] != null && iarr[i] > 0 ? u[i] / iarr[i] : null);
-        const wR = [], mR = [];
-        for (let i = 0; i < labels.length; i++) {
-            wR.push({ x: parseDMY(labels[i]), y: ratio(winU, winI, i) });
-            mR.push({ x: parseDMY(labels[i]), y: ratio(macU, macI, i) });
-        }
-        const cut = labels.length ? parseDMY(labels[labels.length - 1]).getTime() - days * DAY : 0;
-        const flt = (a) => a.filter((p) => p.x.getTime() >= cut);
-        destroyChart("ratio");
-        charts.ratio = new Chart($("#ratioChart"), {
-            type: "line",
-            data: { datasets: [
-                { label: "Windows", data: flt(wR), borderColor: cssVar("--c-windows"), backgroundColor: "transparent", pointRadius: 0, tension: 0.25, borderWidth: 2 },
-                { label: "macOS", data: flt(mR), borderColor: cssVar("--c-mac"), backgroundColor: "transparent", pointRadius: 0, tension: 0.25, borderWidth: 2 }
-            ] },
-            options: baseOptions({
-                plugins: { legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y != null ? c.parsed.y.toFixed(2) + "× updates/install" : "—"}` } } },
-                scales: baseScales({ y: { beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { callback: (v) => v + "×" } } })
-            })
-        });
-    }
-
-    function renderSilicon() {
-        const days = +document.querySelector('input[name="timeDuration"]:checked').value;
-        const daily = advModeIsDaily();
-        const si = buildGlobalSeries(ASSET_GROUPS.macSilicon);
-        const labels = si.labels;
-        let siV = si.totals, inV = buildGlobalSeries(ASSET_GROUPS.macIntel).totals;
-        if (daily) { siV = diffClamped(siV); inV = diffClamped(inV); }
-        const noteEl = $("#siliconNote");
-        if (noteEl) noteEl.textContent = (daily ? "Daily new" : "Cumulative") + " macOS downloads by architecture.";
-        const cut = labels.length ? parseDMY(labels[labels.length - 1]).getTime() - days * DAY : 0;
-        const mk = (vals) => labels.map((l, i) => ({ x: parseDMY(l), y: vals[i] })).filter((p) => p.x.getTime() >= cut);
-        destroyChart("silicon");
-        charts.silicon = new Chart($("#siliconChart"), {
-            type: "line",
-            data: { datasets: [
-                { label: "Apple Silicon (M‑series)", data: mk(siV), borderColor: cssVar("--c-silicon"), backgroundColor: cssVar("--c-silicon") + "22", fill: !daily, pointRadius: 0, tension: 0.25, borderWidth: 2 },
-                { label: "Intel (x64)", data: mk(inV), borderColor: cssVar("--c-intel"), backgroundColor: cssVar("--c-intel") + "22", fill: !daily, pointRadius: 0, tension: 0.25, borderWidth: 2 }
-            ] },
-            options: baseOptions({ scales: baseScales() })
-        });
-    }
-
-    function renderCohort() {
-        const MAXD = +document.querySelector('input[name="timeDuration"]:checked').value;
-        const daily = advModeIsDaily();
-        const noteEl = $("#cohortNote");
-        if (noteEl) noteEl.textContent = `Each release's ${daily ? "daily new" : "cumulative"} downloads in its first ${MAXD} days since launch — compare launches apples‑to‑apples.`;
-        const versions = [...versionList].sort((a, b) => compareVersions.compare(b, a, "<") ? -1 : 1).slice(0, 8);
-        const palette = [cssVar("--brand-red"), cssVar("--brand-amber"), cssVar("--c-windows"), cssVar("--c-silicon"),
-            cssVar("--c-updater"), cssVar("--c-intel"), cssVar("--brand-amber-3"), cssVar("--c-mac")];
-        const datasets = [];
-        versions.forEach((ver, idx) => {
-            const e = prodReleaseHistory[ver];
-            const launch = parseDMY(e.timeSeries[e.timeSeries.length - 1]).getTime();
-            const asc = e.timeSeries.map((d, i) => ({ day: Math.round((parseDMY(d).getTime() - launch) / DAY), c: e.totalDownloads[i] }))
-                .sort((a, b) => a.day - b.day);
-            const vals = daily ? asc.map((p, i) => (i === 0 ? p.c : Math.max(0, p.c - asc[i - 1].c))) : asc.map((p) => p.c);
-            const pts = asc.map((p, i) => ({ x: p.day, y: vals[i] })).filter((p) => p.x >= 0 && p.x <= MAXD);
-            if (pts.length >= 1) { const r = pts.length <= 3 ? 4 : 0; datasets.push({ label: "v" + ver, data: pts, borderColor: palette[idx % palette.length], backgroundColor: "transparent", pointRadius: r, pointHoverRadius: Math.max(r, 4), pointBackgroundColor: palette[idx % palette.length], tension: 0.2, borderWidth: 2 }); }
-        });
-        destroyChart("cohort");
-        charts.cohort = new Chart($("#cohortChart"), {
-            type: "line",
-            data: { datasets },
-            options: baseOptions({
-                plugins: { legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                    tooltip: { callbacks: { title: (items) => `Day ${items[0].parsed.x} after launch`, label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)}` } } },
-                scales: { x: { type: "linear", title: { display: true, text: "days since release" }, grid: { color: cssVar("--grid") } },
-                    y: { beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { callback: (v) => fmtCompact(v) } } }
-            })
-        });
-    }
-
-    /* ============================================================
-       ADVANCED — per-version explorer (ported, proven logic)
-       ============================================================ */
-    function computeDailyDownloads(stats) {
-        const out = [];
-        if (stats.length >= 1) out.push(stats[0]);
-        for (let i = 1; i < stats.length; i++) out.push(stats[i] - stats[i - 1]);
-        return out;
-    }
-    function trimAndReverseVersionData(data, days, computeDailyData) {
-        data = structuredClone(data);
-        const trimmed = {};
-        const { timeSeries } = data;
-        if (timeSeries.length <= 1) computeDailyData = false;
-        let shouldTrimFirst = false;
-        if (computeDailyData) {
-            if (timeSeries.length > days) days = days + 1;
-            shouldTrimFirst = true;
-        }
-        const trimIndex = Math.max(timeSeries.length - days, 0);
-        trimmed.timeSeries = timeSeries.reverse().slice(trimIndex);
-        if (shouldTrimFirst) trimmed.timeSeries = trimmed.timeSeries.slice(1);
-        Object.keys(data).forEach((key) => {
-            if (!["timeSeries", "publishDate"].includes(key)) {
-                trimmed[key] = data[key].reverse().slice(trimIndex);
-                if (computeDailyData) {
-                    trimmed[key] = computeDailyDownloads(trimmed[key]);
-                    if (shouldTrimFirst) trimmed[key] = trimmed[key].slice(1);
-                }
+    function filterLatestNVersions(versionList, n) {
+        // Sorting the version list in descending order
+        versionList.sort((a, b) => {
+            if (compareVersions.compare(b, a, "<")) {
+                return -1;
+            } else if (compareVersions.compare(b, a, ">")) {
+                return 1;
+            } else {
+                return 0;
             }
         });
-        return trimmed;
-    }
-    function sumSeries(arrays) {
-        const series = arrays.filter(Boolean);
-        if (!series.length) return [];
-        return series[0].map((_, i) => series.reduce((s, a) => s + (a[i] || 0), 0));
-    }
-    function lineDS(label, labels, vals, color, opts) {
-        // Brand-new releases can have only 1-2 datapoints; a dotless line would be invisible.
-        // Show markers automatically when the series is sparse.
-        const nPts = (vals || []).filter((v) => v != null).length;
-        const r = nPts <= 3 ? 4 : 0;
-        return Object.assign({ label, data: points(labels, vals), borderColor: color, backgroundColor: "transparent", borderWidth: 2, pointRadius: r, pointHoverRadius: Math.max(r, 4), pointBackgroundColor: color, tension: 0.2 }, opts || {});
-    }
 
-    function renderVersionExplorer() {
-        const days = +document.querySelector('input[name="timeDuration"]:checked').value;
-        const mode = document.querySelector('input[name="mode"]:checked').value;
-        const daily = mode === "daily";
-        const focus = $("#versionSelector").value;
-        $(".version-select-text") && document.querySelectorAll(".version-select-text").forEach((el) => el.textContent = "· v" + focus);
+        // Return the top n versions
+        return versionList.slice(0, n).reverse();
+    }
+    async function plotData() {
+        const VERSION_LS_KEY = "lastNVersions";
+        function createChartData(data, labelPrefix) {
+            return {
+                labels: data.timeSeries,
+                datasets: Object.keys(data).filter(key => key !== "timeSeries" && key !== "publishDate").map(key => ({
+                    label: `${labelPrefix} - ${key.replace(/_/g, ' ')}`,
+                    data: data[key],
+                    borderColor: getLineColor(key),
+                    tension: 0.1
+                }))
+            };
+        }
 
-        /* --- multi-version comparison chart --- */
-        const nVers = Math.max(1, +$("#versionInput").value || 5);
-        const sorted = [...versionList].sort((a, b) => compareVersions.compare(b, a, "<") ? -1 : 1).slice(0, nVers).reverse();
-        const palette = [cssVar("--brand-red"), cssVar("--brand-amber"), cssVar("--c-windows"), cssVar("--c-silicon"),
-            cssVar("--c-updater"), cssVar("--c-intel"), cssVar("--brand-amber-3"), cssVar("--c-mac")];
-        // Plot every version on a shared date axis (null where absent) so index-mode tooltips
-        // line up across series — otherwise sparse releases (e.g. a 1-point new version) drop out.
-        const perVer = sorted.map((ver) => {
-            const d = trimAndReverseVersionData(prodReleaseHistory[ver], days, daily);
-            const m = new Map();
-            d.timeSeries.forEach((t, i) => m.set(t, d.totalDownloads[i]));
-            return { ver, m };
-        });
-        const unionSet = new Set();
-        perVer.forEach((p) => p.m.forEach((_, k) => unionSet.add(k)));
-        const unionDates = [...unionSet].sort((a, b) => parseDMY(a) - parseDMY(b));
-        const verDatasets = perVer.map((p, i) => {
-            const vals = unionDates.map((dt) => (p.m.has(dt) ? p.m.get(dt) : null));
-            return lineDS("v" + p.ver, unionDates, vals, palette[i % palette.length]);
-        });
-        destroyChart("version");
-        charts.version = new Chart($("#versionChart"), {
-            type: "line",
-            data: { datasets: verDatasets },
-            options: baseOptions({
-                scales: baseScales(),
+        function createChartOptions() {
+            return {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
                 plugins: {
-                    legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)}` }, filter: (item) => item.parsed.y != null }
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            };
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        let timePeriod = localStorage.getItem("HistoryViewWindow") || "30";
+        if(!localStorage.getItem("isAggregateMode")){
+            localStorage.setItem("isAggregateMode", "yes");
+        }
+        let isAggregateMode = (localStorage.getItem("isAggregateMode") === "yes");
+        const versionInput = document.getElementById('versionInput');
+        let currentlyPlottingData;
+        const radioButtons = document.querySelectorAll('input[name="timeDuration"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    console.log(`Selected Duration: ${this.value} days`);
+                    localStorage.setItem("HistoryViewWindow", this.value);
+                    timePeriod = this.value;
+                    if(currentlyPlottingData){
+                        updateCharts(currentlyPlottingData);
+                    }
                 }
-            })
+            });
         });
 
-        /* --- OS / installer / updater / assets for focused version --- */
-        const data = trimAndReverseVersionData(prodReleaseHistory[focus], days, daily);
-        const L = data.timeSeries;
-        const linux = sumSeries([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER, data.LINUX_X64_APPIMAGE_INSTALLER]);
-        const macInst = sumSeries([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
-        const winInst = sumSeries([data.WINDOWS_X64_INSTALLER]);
-        const macUpd = sumSeries([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
-        const winUpd = sumSeries([data.WINDOWS_X64_UPDATER]);
-        const macAll = sumSeries([macInst, macUpd]);
-        const winAll = sumSeries([winInst, winUpd]);
+        // Function to get the currently selected option
+        function getSelectedOption() {
+            const selectedRadio = document.querySelector('input[name="timeDuration"]:checked');
+            return selectedRadio ? selectedRadio.value : null;
+        }
 
-        destroyChart("platform");
-        charts.platform = new Chart($("#platformChart"), { type: "line", data: { datasets: [
-            lineDS("Linux", L, linux, cssVar("--c-linux")),
-            lineDS("macOS", L, macAll, cssVar("--c-mac")),
-            lineDS("Windows", L, winAll, cssVar("--c-windows")),
-            lineDS("Total", L, data.totalDownloads, cssVar("--brand-red"), { borderDash: [5, 4] })
-        ] }, options: baseOptions({ scales: baseScales() }) });
+        function getLineColor(labelStr) {
+            // Array of 50 predefined vibrant colors, suitable for visibility against white background
+            const colors = [
+                "#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF3380", // Vibrant primary colors
+                "#FFC300", "#C70039", "#900C3F", "#581845", "#4C4C6D", // Warm and cool tones
+                "#FF6347", "#4682B4", "#3CB371", "#BDB76B", "#DC143C", // Mix of saturation
+                "#00FFFF", "#00008B", "#008B8B", "#B8860B", "#006400", // Deep blues and greens
+                "#8B008B", "#556B2F", "#FF8C00", "#9932CC", "#8B0000", // Purples and dark reds
+                "#E9967A", "#8FBC8F", "#483D8B", "#2F4F4F", "#00CED1", // Earth tones and cyan
+                "#9400D3", "#FF1493", "#00BFFF", "#1E90FF", "#B22222", // Bright and bold
+                "#FF4500", "#6A5ACD", "#708090", "#FF6347", "#4682B4", // Additional vibrant options
+                "#DA70D6", "#40E0D0", "#6495ED", "#DC143C", "#CD5C5C", // Reds and purples
+                "#FF69B4", "#BA55D3", "#9370DB", "#3CB371", "#7B68EE"  // Pinks and soft blues
+            ];
 
-        destroyChart("installer");
-        charts.installer = new Chart($("#installerChart"), { type: "line", data: { datasets: [
-            lineDS("Linux", L, linux, cssVar("--c-linux")),
-            lineDS("macOS", L, macInst, cssVar("--c-mac")),
-            lineDS("Windows", L, winInst, cssVar("--c-windows"))
-        ] }, options: baseOptions({ scales: baseScales() }) });
-
-        destroyChart("updater");
-        charts.updater = new Chart($("#updaterChart"), { type: "line", data: { datasets: [
-            lineDS("macOS updates", L, macUpd, cssVar("--c-mac")),
-            lineDS("Windows updates", L, winUpd, cssVar("--c-windows"))
-        ] }, options: baseOptions({ scales: baseScales() }) });
-
-        // individual assets — generic over keys present
-        const palette2 = [cssVar("--c-windows"), cssVar("--c-mac"), cssVar("--c-silicon"), cssVar("--c-intel"),
-            cssVar("--c-linux"), cssVar("--brand-amber"), cssVar("--c-updater"), cssVar("--brand-red"), cssVar("--brand-amber-3")];
-        const assetKeys = Object.keys(data).filter((k) => k !== "timeSeries" && k !== "publishDate");
-        const assetDatasets = assetKeys.map((k, i) => lineDS(k.replace(/_/g, " "), L, data[k], palette2[i % palette2.length]));
-        destroyChart("assets");
-        charts.assets = new Chart($("#assetsChart"), { type: "line", data: { datasets: assetDatasets }, options: baseOptions({ scales: baseScales() }) });
-    }
-
-    /* ============================================================
-       Orchestration
-       ============================================================ */
-    let advancedRendered = false;
-    function renderOverview() { renderKPIs(); renderGrowth(); renderPlatformMix(); renderDonut(); }
-    function renderAdvanced() { renderVersionExplorer(); renderRatio(); renderSilicon(); renderCohort(); advancedRendered = true; }
-    function renderAll() {
-        applyChartDefaults();
-        renderOverview();
-        renderAdvanced();
-    }
-
-    /* ---------- theme ---------- */
-    function setTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("dashTheme", theme);
-        $("#themeToggle").innerHTML = `<i class="fa-solid fa-${theme === "dark" ? "sun" : "moon"}"></i>`;
-    }
-
-    /* ---------- wire up ---------- */
-    function bindEvents() {
-        $("#themeToggle").addEventListener("click", () => {
-            const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-            setTheme(next);
-            renderAll();
-        });
-
-        document.querySelectorAll('input[name="ovwin"]').forEach((r) => r.addEventListener("change", renderGrowth));
-
-        const advInputs = ['input[name="timeDuration"]', 'input[name="mode"]'];
-        advInputs.forEach((sel) => document.querySelectorAll(sel).forEach((r) => r.addEventListener("change", function () {
-            localStorage.setItem(this.name, this.value);
-            if (advancedRendered) renderAdvanced();
-        })));
-        $("#versionSelector").addEventListener("change", () => advancedRendered && renderVersionExplorer());
-        $("#versionInput").addEventListener("change", function () { localStorage.setItem("lastNVersions", this.value); if (advancedRendered) renderVersionExplorer(); });
-    }
-
-    function restorePrefs() {
-        setTheme(localStorage.getItem("dashTheme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-        const win = localStorage.getItem("timeDuration") || "90";
-        const winEl = document.querySelector(`input[name="timeDuration"][value="${win}"]`); if (winEl) winEl.checked = true; else document.querySelector('input[name="timeDuration"][value="90"]').checked = true;
-        const mode = localStorage.getItem("mode") || "aggregate";
-        const modeEl = document.querySelector(`input[name="mode"][value="${mode}"]`); if (modeEl) modeEl.checked = true;
-        $("#versionInput").value = localStorage.getItem("lastNVersions") || 5;
-    }
-
-    function populateVersions() {
-        versionList = Object.keys(prodReleaseHistory);
-        latestVersion = versionList[0];
-        versionList.forEach((v) => { if (compareVersions.compare(v, latestVersion, ">")) latestVersion = v; });
-        const sel = $("#versionSelector");
-        [...versionList].sort((a, b) => compareVersions.compare(b, a, "<") ? -1 : 1).forEach((v) => {
-            const o = document.createElement("option"); o.value = v; o.textContent = "v" + v; sel.appendChild(o);
-        });
-        sel.value = latestVersion;
-    }
-
-    async function init() {
-        try {
-            const [hist, counts] = await Promise.all([
-                fetchFirst(HISTORY_URLS, (d) => (d && d.prodReleaseHistory && Object.keys(d.prodReleaseHistory).length) ? null : "missing prodReleaseHistory"),
-                fetchFirst(COUNTS_URLS, (d) => (d && typeof d.totalDownloads === "number") ? null : "missing totalDownloads").catch(() => null)
-            ]);
-            historyData = hist; countsData = counts; prodReleaseHistory = hist.prodReleaseHistory;
-
-            restorePrefs();
-            populateVersions();
-            bindEvents();
-
-            if (historyData.timestamp) {
-                $("#updatedLabel").textContent = "updated " + new Date(historyData.timestamp).toLocaleString();
+            // A simple hash function to hash the input string
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash);
             }
 
-            $("#loadingState").hidden = true;
-            $("#dashboard").hidden = false;
-            renderAll();
-        } catch (e) {
-            console.error(e);
-            $("#loadingState").hidden = true;
-            $("#errorState").hidden = false;
-            $("#errorMsg").textContent = (e && e.message) ? e.message : "Network error.";
+            // Generate a numeric hash of the label string
+            const hash = simpleHash(labelStr);
+
+            // Use the hash to pick a color from the array
+            const index = hash % colors.length; // Use modulo to wrap around the array length
+            return colors[index];
+        }
+
+
+        // Function to set a selected option
+        function setSelectedOption(value) {
+            const radioToSelect = document.querySelector(`input[name="timeDuration"][value="${value}"]`);
+            if (radioToSelect) {
+                radioToSelect.checked = true;
+                console.log(`Set Duration to: ${value} days`);
+            }
+        }
+
+        document.getElementById('toggleButton').addEventListener('change', function() {
+            console.log(`Switched to: ${this.checked ? 'Aggregate' : 'Daily'}`);
+            isAggregateMode = this.checked;
+            setAggregateMode(isAggregateMode);
+            if(currentlyPlottingData){
+                updateCharts(currentlyPlottingData);
+            }
+        });
+
+        versionInput.addEventListener('change', ()=>{
+            if(currentlyPlottingData){
+                localStorage.setItem("VERSION_LS_KEY", versionInput.value);
+                updateCharts(currentlyPlottingData);
+            }
+        });
+        versionInput.value = localStorage.getItem("VERSION_LS_KEY") || 5;
+
+        function setAggregateMode(isAggregate) {
+            const toggle = document.getElementById('toggleButton');
+            toggle.checked = isAggregate; // true for 'Aggregate', false for 'Daily'
+            localStorage.setItem("isAggregateMode", isAggregate ? "yes" : "no");
+        }
+        setAggregateMode(isAggregateMode);
+
+        setSelectedOption(timePeriod);
+
+        function computeDailyDownloads(stats) {
+            // The first entry is the cumulative count up to that day, not a daily
+            // diff — callers must trim it from the rendered series.
+            const dailyDownloads = [];
+            if(stats.length >= 1){
+                dailyDownloads.push(stats[0]);
+            }
+            for (let i = 1; i < stats.length; i++) {
+                dailyDownloads.push(stats[i] - stats[i - 1]);
+            }
+            return dailyDownloads;
+        }
+
+        function trimAndReverseVersionData(data, days, computeDailyData, version) {
+            data = structuredClone(data);
+            const trimmedData = {};
+
+            const versionData = data;
+            const { timeSeries } = versionData;
+
+            if(timeSeries.length === 1 || !timeSeries.length){
+                // if there is only 1 data point, this is likley a new release and we will
+                computeDailyData = false;
+            }
+            let shouldTrimFirstElem = false;
+            if(computeDailyData){
+                // In daily mode the first datapoint is the absolute cumulative count
+                // (and for versions <=3.8.8 it's months of aggregated downloads, plus
+                // resets can leave the earliest entry as a huge cumulative baseline).
+                // Always trim it. If we have more history than requested, extend the
+                // slice by one day so the chart still spans the full window.
+                if(timeSeries.length > days){
+                    days = days + 1;
+                }
+                shouldTrimFirstElem = true;
+            }
+            const trimIndex = Math.max(timeSeries.length - days, 0); // Calculate index to start slicing from
+
+            // Create a new object for the version, initializing with a trimmed timeSeries
+            // the array is sorted in time latest at start, so we need to reverse it too.
+            trimmedData.timeSeries = timeSeries.reverse().slice(trimIndex);
+            if(shouldTrimFirstElem){
+                trimmedData.timeSeries = trimmedData.timeSeries.slice(1);
+            }
+
+            // Go through each key except timeSeries in the version data
+            Object.keys(versionData).forEach(key => {
+                if (!["timeSeries", "publishDate"].includes(key)) {
+                    // Trim each array to the same length as the new timeSeries
+                    trimmedData[key] = versionData[key].reverse().slice(trimIndex);
+                    if(computeDailyData){
+                        trimmedData[key] = computeDailyDownloads(trimmedData[key]);
+                        if(shouldTrimFirstElem){
+                            trimmedData[key] = trimmedData[key].slice(1);
+                        }
+                    }
+                }
+            });
+
+            return trimmedData;
+        }
+
+        const DOWNLOAD_HISTORY_URL = "https://public-stats.phcode.io/generated/download_history.json";
+        async function getCurrentHistoryData() {
+            try{
+                const fetchedData = await fetch(DOWNLOAD_HISTORY_URL);
+                return await fetchedData.json();
+            } catch (e) {
+                console.error("No previous data", e);
+            }
+            return null;
+        }
+        let downloadsChart, platformChart, installerChart, updaterChart, versionsChart;
+        const historyData = await getCurrentHistoryData();
+        const prodReleaseHistory = historyData.prodReleaseHistory;
+
+        const versionSelector = document.getElementById('versionSelector');
+        const versions = Object.keys(prodReleaseHistory);
+        let latestVersion = versions[0];
+        versions.forEach(version => {
+            const option = document.createElement('option');
+            option.value = version;
+            option.textContent = version;
+            versionSelector.appendChild(option);
+            if(version > latestVersion){
+                latestVersion = version;
+            }
+        });
+        // Initialize charts with the first version selected
+        versionSelector.addEventListener('change', () => {
+            updateCharts(prodReleaseHistory[versionSelector.value]);
+        });
+        console.log("latest Version", latestVersion);
+        versionSelector.value = latestVersion;
+        async function plotVersionGraph() {
+            const days = parseInt(timePeriod);
+            const allVersions = Object.keys(prodReleaseHistory);
+            const lastNVersions = filterLatestNVersions(allVersions, versionInput.value);
+            $(".version-select-text").text(`- V${versionSelector.value}`);
+            console.log(`Computing downloads for lat ${versionInput.value} versions`);
+            let largestTimeSeries = [];
+            const versionData = {};
+            for(let version of lastNVersions){
+                const inputData = prodReleaseHistory[version];
+                const releaseData = trimAndReverseVersionData(inputData, days, !isAggregateMode, version);
+                if(largestTimeSeries.length < releaseData.timeSeries.length){
+                    largestTimeSeries = releaseData.timeSeries;
+                }
+                versionData[version] = releaseData.totalDownloads;
+            }
+            let total = new Array(largestTimeSeries.length).fill(0);
+            for(let version of lastNVersions){
+                let versionDownloads = versionData[version];
+                if(versionDownloads.length < largestTimeSeries.length){
+                    // this is a new release with some data missing at start, null it
+                    const fillNullNum = largestTimeSeries.length - versionDownloads.length;
+                    versionData[version] = new Array(fillNullNum).fill(null).concat(versionDownloads);
+                    versionDownloads = versionData[version];
+                }
+                if(versionDownloads.length !== total.length){
+                    alert(`Error! something went wrong computing download for past ${versionInput.value} versions.`);
+                    return;
+                }
+                for(let i =0; i<total.length; i++){
+                    if(versionDownloads[i]){
+                        total[i] = total[i] + versionDownloads[i];
+                    }
+                }
+            }
+            versionData["Total"] = total;
+            versionData["timeSeries"] = largestTimeSeries;
+            console.log(versionData);
+            const ctxVersion = document.getElementById('versionChart').getContext('2d');
+            if(versionsChart){
+                versionsChart.destroy();
+            }
+            versionsChart = new Chart(ctxVersion, {
+                type: 'line',
+                data: createChartData(versionData, ''),
+                options: createChartOptions()
+            });
+        }
+        updateCharts(prodReleaseHistory[latestVersion]);
+        function updateCharts(inputData) {
+            currentlyPlottingData = inputData;
+            const data = trimAndReverseVersionData(inputData, parseInt(timePeriod), !isAggregateMode, versionSelector.value);
+            plotVersionGraph();
+            // Calculate platform aggregates
+            function sumDownloads(dataArray) {
+                // Ignore series that are missing (e.g. AppImage on older releases that predate it).
+                const series = dataArray.filter(Boolean);
+                if (!series.length) {
+                    return [];
+                }
+                return series[0].map((_, index) => series.reduce((sum, current) => sum + (current[index] || 0), 0));
+            }
+
+            // Linux switched from the GLIBC tarballs to a single AppImage from v5.1.x onwards.
+            const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER, data.LINUX_X64_APPIMAGE_INSTALLER]);
+            const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
+            const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
+
+            const macUpdater = sumDownloads([data.MAC_M1_UPDATER, data.MAC_X64_UPDATER]);
+            const windowsUpdater = sumDownloads([data.WINDOWS_X64_UPDATER]);
+
+            const alMac = sumDownloads([macInstaller, macUpdater]);
+            const alWin = sumDownloads([windowsInstaller, windowsUpdater]);
+
+            const ctx1 = document.getElementById('downloadsChart').getContext('2d');
+            if(downloadsChart){
+                downloadsChart.destroy();
+            }
+            downloadsChart = new Chart(ctx1, {
+                type: 'line',
+                data: createChartData(data, ''),
+                options: createChartOptions()
+            });
+
+            const ctx2 = document.getElementById('platformChart').getContext('2d');
+            if(platformChart){
+                platformChart.destroy();
+            }
+            platformChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        // in linux we cant distinguish between installs and updates, so we just use linuxInstaller
+                        { label: 'Linux', data: linuxInstaller, borderColor: 'orange', tension: 0.1 },
+                        { label: 'Mac', data: alMac, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows', data: alWin, borderColor: 'blue', tension: 0.1 },
+                        { label: 'Total', data: data.totalDownloads, borderColor: '#000000', tension: 0.1 }
+                    ]
+                },
+                options: createChartOptions()
+            });
+
+            const ctx3 = document.getElementById('installerChart').getContext('2d');
+            if(installerChart){
+                installerChart.destroy();
+            }
+            installerChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        { label: 'Linux', data: linuxInstaller, borderColor: 'orange', tension: 0.1 },
+                        { label: 'Mac', data: macInstaller, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows', data: windowsInstaller, borderColor: 'blue', tension: 0.1 },
+                    ]
+                },
+                options: createChartOptions()
+            });
+
+            const ctx4 = document.getElementById('updaterChart').getContext('2d');
+            if(updaterChart){
+                updaterChart.destroy();
+            }
+            updaterChart = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: data.timeSeries,
+                    datasets: [
+                        { label: 'Mac Updaters', data: macUpdater, borderColor: 'silver', tension: 0.1 },
+                        { label: 'Windows Updaters', data: windowsUpdater, borderColor: 'blue', tension: 0.1 }
+                    ]
+                },
+                options: createChartOptions()
+            });
         }
     }
-
-    init();
-})();
+    plotData();
 </script>
 </body>
 </html>

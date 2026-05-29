@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>phcode.io Public Stats</title>
+    <title>Phoenix Code — Public Stats</title>
+
+    <!-- Microsoft Clarity -->
     <script type="text/javascript">
         (function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -17,51 +19,67 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-
         gtag('config', 'G-0TD6PVRN4L');
     </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="download-graphs.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        .navbar { background: #333; color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-        .navbar a, .navbar a img { color: #fff; text-decoration: none; }
-        .navbar img.logo { height: 40px; }
-        .content { display: flex; justify-content: center; margin-top: 20px; padding: 20px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; width: 30%; text-align: center; }
-        .card img { max-width: 100%; height: auto; }
-        .card a { text-decoration: none; color: #333; }
-        .card-title { font-size: 18px; font-weight: bold; margin-top: 15px; }
-        .card-description { font-size: 14px; margin-top: 5px; }
-        .get-code:hover {text-decoration: underline;}
+        .landing { max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
+        .landing-hero { text-align: center; margin-bottom: 40px; }
+        .landing-hero h2 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
+        .landing-hero h2 .accent { background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .landing-hero p { color: var(--muted); font-size: 1rem; margin: 0; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 760px; margin: 0 auto; }
+        .stat-card { text-decoration: none; color: inherit; display: block; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--brand-amber); text-decoration: none; box-shadow: 0 8px 28px rgba(16,24,40,0.10); }
+        .stat-card .stat-icon { width: 52px; height: 52px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; background: var(--brand-gradient); margin-bottom: 14px; }
+        .stat-card h3 { margin: 0 0 6px; font-size: 1.12rem; font-weight: 700; }
+        .stat-card p { margin: 0 0 14px; color: var(--muted); font-size: 0.9rem; }
+        .stat-card .go { color: var(--brand-amber); font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px; }
     </style>
 </head>
 <body>
-<div class="navbar">
-    <div class="navbar-left" style="display: flex; justify-content: center; align-items: center;">
-        <img
-                width="20px" src="images/phoenix-logo.svg" alt="phcode logo" class="logo">
-        Phoenix Code Public Stats
+<header class="site-header">
+    <img class="logo" src="images/phoenix-logo.svg" alt="Phoenix Code logo">
+    <h1>Phoenix Code <span class="accent">Public Stats</span></h1>
+    <div class="header-spacer"></div>
+    <div class="header-actions">
+        <a class="btn-download" href="https://phcode.io" target="_blank" rel="noopener" title="Download Phoenix Code"><i class="fa-solid fa-download"></i> <span class="btn-text">Download Phoenix Code</span></a>
+        <a class="icon-btn" href="https://github.com/phcode-dev/public-stats" target="_blank" rel="noopener" title="Data source on GitHub" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
     </div>
-    <div class="navbar-right" style="display: flex; justify-content: center; align-items: center;">
-        <img
-                width="20px" src="images/download-svgrepo-com.svg" alt="phcode logo" class="logo">
-        <div class="get-code" style="padding-right: 25px;">
-            <a href="https://phcode.io" target="_blank">Get Phoenix Code</a>
-        </div>
-        <div>
-            <a href="https://github.com/phcode-dev/public-stats" target="_blank">
-                <img width="20px" src="images/github-white.svg" alt="GitHub">
-            </a>
-        </div>
-    </div>
-</div>
-<div class="content">
-    <div class="card">
-        <a href="download-graphs.html">
-            <img width="50%" src="images/chart-line-svgrepo-com.svg" alt="Download Stats Graph">
-            <div class="card-title">Download Stats</div>
-            <div class="card-description">Explore detailed download statistics of Phoenix Code Editor.</div>
+</header>
+
+<div class="landing">
+    <div class="card-grid">
+        <a class="card stat-card" href="download-graphs.html">
+            <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Download Stats</h3>
+            <p>Explore detailed download statistics of Phoenix Code Editor.</p>
         </a>
     </div>
 </div>
+
+<footer class="site-footer">
+    <a href="https://github.com/phcode-dev/public-stats" target="_blank" rel="noopener"><i class="fa-brands fa-github ic"></i> View source</a>
+    <span class="spacer"></span>
+    <span>Made with <i class="fa-solid fa-heart" style="color:var(--brand-red)"></i> by <a href="https://phcode.io" target="_blank" rel="noopener">phcode.io</a></span>
+</footer>
+
+<script>
+    (function () {
+        const tgl = document.getElementById("themeToggle");
+        function setTheme(t) {
+            document.documentElement.setAttribute("data-theme", t);
+            localStorage.setItem("dashTheme", t);
+            tgl.innerHTML = '<i class="fa-solid fa-' + (t === "dark" ? "sun" : "moon") + '"></i>';
+        }
+        setTheme(localStorage.getItem("dashTheme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+        tgl.addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
+    })();
+</script>
 </body>
 </html>

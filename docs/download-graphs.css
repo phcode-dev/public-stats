@@ -109,6 +109,29 @@ a:hover { text-decoration: underline; }
 }
 .icon-btn:hover { background: var(--surface-2); border-color: var(--brand-amber); transform: translateY(-1px); }
 
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: var(--brand-gradient);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-red) 30%, transparent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+}
+.btn-download:hover { transform: translateY(-1px); text-decoration: none; color: #fff; box-shadow: 0 4px 14px color-mix(in srgb, var(--brand-red) 42%, transparent); }
+
+@media (max-width: 560px) {
+    .btn-download .btn-text { display: none; }
+    .btn-download { padding: 0 12px; }
+}
+
 /* ---------- Layout ---------- */
 main {
     max-width: 1200px;

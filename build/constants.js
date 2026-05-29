@@ -1,6 +1,9 @@
 const RELEASE_ASSET_INSTALLER_SUFFIXES = {
     LINUX_X64_GLIBC_2_31_INSTALLER: "_amd64_linux_bin-GLIBC-2.31.tar.gz",
     LINUX_X64_GLIBC_2_35_INSTALLER: "_amd64_linux_bin-GLIBC-2.35.tar.gz",
+    // From v5.1.x onwards the Linux distribution ships as an AppImage instead of the GLIBC tarballs.
+    // ".AppImage.sig" ends with ".sig", so endsWith(".AppImage") correctly excludes the signature file.
+    LINUX_X64_APPIMAGE_INSTALLER: ".AppImage",
     WINDOWS_X64_INSTALLER: "_x64-setup.exe",
     MAC_M1_INSTALLER: "_aarch64.dmg",
     MAC_X64_INSTALLER: "_x64.dmg",
@@ -9,6 +12,7 @@ const RELEASE_ASSET_INSTALLER_SUFFIXES = {
 const RELEASE_ASSET_INSTALLER_PREFIXES = {
     LINUX_X64_GLIBC_2_31_INSTALLER: "phoenix-code_",
     LINUX_X64_GLIBC_2_35_INSTALLER: "phoenix-code_",
+    LINUX_X64_APPIMAGE_INSTALLER: "phoenix-code_",
     WINDOWS_X64_INSTALLER: "Phoenix.Code_",
     MAC_M1_INSTALLER: "Phoenix.Code_",
     MAC_X64_INSTALLER: "Phoenix.Code_"

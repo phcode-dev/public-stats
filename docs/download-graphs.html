@@ -397,10 +397,16 @@
             plotVersionGraph();
             // Calculate platform aggregates
             function sumDownloads(dataArray) {
-                return dataArray[0].map((_, index) => dataArray.reduce((sum, current) => sum + current[index], 0));
+                // Ignore series that are missing (e.g. AppImage on older releases that predate it).
+                const series = dataArray.filter(Boolean);
+                if (!series.length) {
+                    return [];
+                }
+                return series[0].map((_, index) => series.reduce((sum, current) => sum + (current[index] || 0), 0));
             }
 
-            const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER]);
+            // Linux switched from the GLIBC tarballs to a single AppImage from v5.1.x onwards.
+            const linuxInstaller = sumDownloads([data.LINUX_X64_GLIBC_2_31_INSTALLER, data.LINUX_X64_GLIBC_2_35_INSTALLER, data.LINUX_X64_APPIMAGE_INSTALLER]);
             const macInstaller = sumDownloads([data.MAC_M1_INSTALLER, data.MAC_X64_INSTALLER]);
             const windowsInstaller = sumDownloads([data.WINDOWS_X64_INSTALLER]);
 

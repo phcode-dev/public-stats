@@ -25,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="download-graphs.css">
+    <link rel="stylesheet" href="download-graphs-detailed.css">
     <style>
         .landing { max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
         .landing-hero { text-align: center; margin-bottom: 40px; }
@@ -55,7 +55,7 @@
 
 <div class="landing">
     <div class="card-grid">
-        <a class="card stat-card" href="download-graphs.html">
+        <a class="card stat-card" id="statsCard" href="download-graphs.html" data-detailed="download-graphs-detailed.html">
             <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
             <h3>Download Stats</h3>
             <p>Explore detailed download statistics of Phoenix Code Editor.</p>
@@ -79,6 +79,15 @@
         }
         setTheme(localStorage.getItem("dashTheme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
         tgl.addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
+
+        // Normal click -> public stats page. Cmd/Ctrl-click -> detailed (private) analytics in a new tab.
+        const card = document.getElementById("statsCard");
+        card.addEventListener("click", (e) => {
+            if (e.metaKey || e.ctrlKey) {
+                e.preventDefault();
+                window.open(card.dataset.detailed, "_blank", "noopener");
+            }
+        });
     })();
 </script>
 </body>

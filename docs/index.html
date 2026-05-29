@@ -80,12 +80,12 @@
         setTheme(localStorage.getItem("dashTheme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
         tgl.addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
 
-        // Normal click -> public stats page. Cmd/Ctrl-click -> detailed (private) analytics in a new tab.
+        // Normal click -> public stats page. Cmd/Ctrl-click -> detailed (private) analytics in the same tab.
         const card = document.getElementById("statsCard");
         card.addEventListener("click", (e) => {
             if (e.metaKey || e.ctrlKey) {
                 e.preventDefault();
-                window.open(card.dataset.detailed, "_blank", "noopener");
+                window.location.href = card.dataset.detailed;
             }
         });
     })();

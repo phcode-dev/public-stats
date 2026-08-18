@@ -59,6 +59,18 @@ async function updateDownloadStats(releases) {
     const existingData = await getCurrentDownloadData();
     console.log(`Current data from ${DOWNLOAD_COUNTS_URL}`, existingData);
     if (existingData && existingData.timestamp && existingData.totalDownloads) {
+        // Download counts are cumulative and only ever go up (barring a release being deleted from GitHub).
+        // A big drop means we got a bad/partial release list; don't publish it, as that would also feed the
+        // negative rate and (via download_history) wipe the history graphs.
+        const MAX_ALLOWED_DROP_FRACTION = 0.1;
+        const drop = existingData.totalDownloads - data.totalDownloads;
+        if (drop > existingData.totalDownloads * MAX_ALLOWED_DROP_FRACTION
+            && process.env.ALLOW_HISTORY_RESET !== 'true') {
+            console.error(`[download_counts] computed totalDownloads ${data.totalDownloads} is ${drop} lower than`
+                + ` the live value ${existingData.totalDownloads} (>${MAX_ALLOWED_DROP_FRACTION * 100}% drop).`);
+            console.error(`[download_counts] Refusing to publish. Re-run with ALLOW_HISTORY_RESET=true if this drop is genuine.`);
+            process.exit(1);
+        }
         const lastTimeStamp = new Date(existingData.timestamp).getTime();
         const currentTimeStamp = new Date(data.timestamp).getTime();
         const timeDifferenceMinutes = (currentTimeStamp - lastTimeStamp) / (1000 * 60);

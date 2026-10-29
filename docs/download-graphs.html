@@ -261,6 +261,20 @@
             return dailyDownloads;
         }
 
+        function isTrackedSincePublish(versionData) {
+            // timeSeries is latest first, as "dd-mm-yyyy" UTC dates written by the hourly build.
+            const earliest = versionData.timeSeries[versionData.timeSeries.length - 1];
+            if(!earliest || !versionData.publishDate){
+                return false;
+            }
+            const [dd, mm, yyyy] = earliest.split("-").map(Number);
+            const earliestDay = Date.UTC(yyyy, mm - 1, dd);
+            const published = new Date(versionData.publishDate);
+            const publishDay = Date.UTC(published.getUTCFullYear(), published.getUTCMonth(), published.getUTCDate());
+            // a day of slack for releases published just before midnight and first recorded the next day.
+            return earliestDay - publishDay <= 24 * 60 * 60 * 1000;
+        }
+
         function trimAndReverseVersionData(data, days, computeDailyData, version) {
             data = structuredClone(data);
             const trimmedData = {};
@@ -277,12 +291,17 @@
                 // In daily mode the first datapoint is the absolute cumulative count
                 // (and for versions <=3.8.8 it's months of aggregated downloads, plus
                 // resets can leave the earliest entry as a huge cumulative baseline).
-                // Always trim it. If we have more history than requested, extend the
-                // slice by one day so the chart still spans the full window.
+                // Trim it. If we have more history than requested, extend the slice by
+                // one day so the chart still spans the full window.
                 if(timeSeries.length > days){
                     days = days + 1;
+                    shouldTrimFirstElem = true;
+                } else {
+                    // The whole history fits in the window. If it starts on the publish day, the
+                    // first datapoint is the release day's downloads, not a baseline, so keep it.
+                    // Otherwise a brand-new release loses its launch-day downloads at midnight UTC.
+                    shouldTrimFirstElem = !isTrackedSincePublish(versionData);
                 }
-                shouldTrimFirstElem = true;
             }
             const trimIndex = Math.max(timeSeries.length - days, 0); // Calculate index to start slicing from
 

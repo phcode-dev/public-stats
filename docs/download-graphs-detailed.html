@@ -574,6 +574,16 @@
         for (let i = 1; i < stats.length; i++) out.push(stats[i] - stats[i - 1]);
         return out;
     }
+    // True when history starts on (or the day after) the publish day, so the first datapoint is the
+    // release day's downloads rather than a cumulative baseline (e.g. <=3.8.8, tracked from mid-life).
+    function isTrackedSincePublish(data) {
+        const earliest = data.timeSeries[data.timeSeries.length - 1]; // latest first, "dd-mm-yyyy" UTC
+        if (!earliest || !data.publishDate) return false;
+        const [dd, mm, yyyy] = earliest.split("-").map(Number);
+        const p = new Date(data.publishDate);
+        const publishDay = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate());
+        return Date.UTC(yyyy, mm - 1, dd) - publishDay <= 24 * 60 * 60 * 1000;
+    }
     function trimAndReverseVersionData(data, days, computeDailyData) {
         data = structuredClone(data);
         const trimmed = {};
@@ -581,8 +591,13 @@
         if (timeSeries.length <= 1) computeDailyData = false;
         let shouldTrimFirst = false;
         if (computeDailyData) {
-            if (timeSeries.length > days) days = days + 1;
-            shouldTrimFirst = true;
+            if (timeSeries.length > days) {
+                days = days + 1;
+                shouldTrimFirst = true;
+            } else {
+                // Whole history fits in the window: keep a new release's launch-day downloads.
+                shouldTrimFirst = !isTrackedSincePublish(data);
+            }
         }
         const trimIndex = Math.max(timeSeries.length - days, 0);
         trimmed.timeSeries = timeSeries.reverse().slice(trimIndex);
